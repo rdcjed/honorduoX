@@ -94,7 +94,7 @@
         <!-- Independent cross-process log provider (root-free). -->
         <provider
             android:name=".log.AppLogProvider"
-            android:authorities="io.github.odomu.honorduo.log"
+            android:authorities="${applicationId}.log"
             android:exported="false" />
     </application>
 

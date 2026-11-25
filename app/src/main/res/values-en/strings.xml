@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="screenshot_signal_title">Stacked signal (reference style)</string>
+    <string name="screenshot_signal_summary">Show each SIM on its own row with network type and rounded bars</string>
     <string name="drawing_order_title">In-ring order</string>
-    <string name="app_name">HonorDuo</string>
+    <string name="app_name">HonorDuoX</string>
     <string name="module_description">Honor status bar · Network, signal and battery, unified</string>
 
     <string name="group_stroke">Stroke</string>
@@ -363,7 +365,7 @@
     <string name="about_title">About</string>
     <string name="tab_home">Home</string>
     <string name="home_banner_inactive_title">Module Inactive</string>
-    <string name="home_banner_inactive_summary">Please enable HonorDuo in LSPosed and restart System UI</string>
+    <string name="home_banner_inactive_summary">Please enable HonorDuoX in LSPosed and restart System UI</string>
     <string name="home_banner_noscope_title">System UI Scope Missing</string>
     <string name="home_banner_noscope_summary">Please check System UI (com.android.systemui) in module scope</string>
 

@@ -19,6 +19,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.provider.Settings
 import android.telephony.SubscriptionInfo
 import android.telephony.SubscriptionManager
 import android.telephony.TelephonyCallback
@@ -508,6 +509,13 @@ internal class StatusState(val host: View) {
 
         @JvmStatic
         fun appContext(): Context? = sContextRef?.get()
+
+        /** Let SystemUI display its own airplane-mode indicator. */
+        fun airplaneMode(): Boolean = appContext()?.let { context ->
+            runCatching {
+                Settings.Global.getInt(context.contentResolver, Settings.Global.AIRPLANE_MODE_ON, 0) != 0
+            }.getOrDefault(false)
+        } ?: false
 
         @Volatile
         private var sSimsDueAt = 0L

@@ -19,6 +19,7 @@ import io.github.odomu.honorduo.hook.core.Refl
 import io.github.odomu.honorduo.hook.tracker.WifiPresence
 import io.github.odomu.honorduo.model.ModuleConfig
 import io.github.odomu.honorduo.model.StatusAppearance
+import io.github.odomu.honorduo.model.StatusState
 import java.lang.ref.WeakReference
 import java.lang.reflect.Field
 
@@ -172,7 +173,8 @@ internal object StatusBarIconManager {
     fun isOwned(id: Int, a: StatusAppearance): Boolean = when {
         !a.enabled || StatusBarRowManager.suppressed -> false
         id == wifiId -> a.glyph && a.ownsWifi()
-        id == mobileId -> (a.glyph && (a.signalDots() || a.drawsAnySimRow())) || a.stackedOut()
+        id == mobileId -> !(a.screenshotSignal && StatusState.airplaneMode()) &&
+            ((a.glyph && (a.signalDots() || a.drawsAnySimRow())) || a.stackedOut())
         id == batteryId -> a.glyph
         id == clockId -> false
         else -> false

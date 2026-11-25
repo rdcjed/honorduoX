@@ -27,7 +27,7 @@ import java.util.Locale
 class AppLogProvider : ContentProvider() {
 
     companion object {
-        const val AUTHORITY = "io.github.odomu.honorduo.log"
+        const val AUTHORITY = "io.github.rdcjed.honorduox.log"
         val CONTENT_URI: Uri = Uri.parse("content://$AUTHORITY")
         const val METHOD_WRITE = "write"
         const val METHOD_CLEAR = "clear"

@@ -48,7 +48,7 @@ object Prefs {
      * Lives here rather than in [ModuleConfig] because the settings app must be able
      * to name it, and [ModuleConfig] references the Xposed API.
      */
-    const val ACTION_RELOAD = "io.github.odomu.honorduo.action.RELOAD"
+    const val ACTION_RELOAD = "io.github.rdcjed.honorduox.action.RELOAD"
 
     /**
      * Package the reload broadcast is addressed to. SystemUI registers the receiver,
@@ -57,7 +57,7 @@ object Prefs {
     const val SYSTEMUI_PACKAGE = "com.android.systemui"
 
     /** Application package name. */
-    const val PACKAGE_NAME = "io.github.odomu.honorduo"
+    const val PACKAGE_NAME = "io.github.rdcjed.honorduox"
 
     /** The launcher alias component name for desktop icon toggling. */
     const val LAUNCHER_ALIAS = "io.github.odomu.honorduo.ui.MainActivityAlias"
@@ -577,6 +577,8 @@ object Prefs {
      * the ring's own level dots are the signal.
      */
     const val KEY_STACKED_SIGNAL = "stacked_signal"
+    const val KEY_SCREENSHOT_SIGNAL = "screenshot_signal"
+    const val DEF_SCREENSHOT_SIGNAL = false
 
     /**
      * Draws only the current data SIM's out-of-ring signal row, leaving the other SIM

@@ -41,10 +41,10 @@ internal fun DrawingOutsideParts(
 ) {
     val a = StatusAppearance.of(settings)
     val order = settings.outOrder
-    val typeInside = a.stackTypeShown()
+    val typeInside = a.stackTypeShown() || a.screenshotSignal
     val visible = order.filter { slot ->
         when (slot) {
-            Prefs.OUT_SLOT_SIGNAL -> a.signalOutOfRing
+            Prefs.OUT_SLOT_SIGNAL -> a.signalOutOfRing || a.screenshotSignal
             Prefs.OUT_SLOT_READOUTS -> a.perfPairShown()
             Prefs.OUT_SLOT_TYPE -> a.typeOutOfRing && !typeInside &&
                 !(a.signalOutOfRing && !a.stackedSignal)

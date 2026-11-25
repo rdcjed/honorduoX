@@ -83,6 +83,7 @@ internal enum class ContentControl(val owner: SettingsPart) {
      * the row, not a second component.
      */
     Mobile(SettingsPart.Mobile),
+    ScreenshotSignal(SettingsPart.Mobile),
     DataSim(SettingsPart.Mobile),
     /**
      * The out-of-ring rendering: the module's own stacked reading, or MagicOS' icon.
@@ -310,6 +311,12 @@ internal fun ContentControlRow(
             dependencies = emptyList(),
         ) { value -> update { it.setReplaceStatusIcon(value) } }
         ContentControl.Mobile -> Unit
+        ContentControl.ScreenshotSignal -> ContentToggle(
+            checked = settings.screenshotSignal,
+            title = R.string.screenshot_signal_title,
+            summaryRes = R.string.screenshot_signal_summary,
+            dependencies = listOf(settings.enabled to R.string.master_module_title),
+        ) { value -> update { it.setScreenshotSignal(value) } }
         ContentControl.DataSim -> ContentToggle(a.dataSimOnly, R.string.data_sim_only_title,
             null, emptyList()) { value -> update { it.setDataSimOnly(value) } }
         ContentControl.Stacked -> ContentToggle(

@@ -439,7 +439,7 @@ internal object StatusBarRowManager {
 
     /** The stacked SIM reading, or nothing when the signal is handed back. */
     private fun syncSignal(row: Row, a: StatusAppearance) {
-        if (!a.stackedOut()) {
+        if (!a.stackedOut() || (a.screenshotSignal && StatusState.airplaneMode())) {
             remove(row, row.signal)
             row.signal = null
             return
@@ -453,6 +453,8 @@ internal object StatusBarRowManager {
             }
         }
         row.signal = signal
+        // Keep the reference-style signal centered with the native Wi-Fi and battery.
+        if (a.screenshotSignal) signal.translationY = 0f
         signal.host = row.state
         val rowHeight = row.row.height
         val reading = IntArray(2)
@@ -477,7 +479,7 @@ internal object StatusBarRowManager {
             }
         }
         // Per-card types; an unanswered card borrows the sampled type so no label goes blank.
-        if (reading[1] >= 0 && !a.showSim2) {
+        if (reading[1] >= 0 && (if (a.screenshotSignal) a.hideSim2 else !a.showSim2)) {
             reading[1] = -1
         }
         val fallback = StatusState.sMobileType.ifEmpty { null }
@@ -974,7 +976,9 @@ internal object StatusBarRowManager {
                 dy = if (minY > maxY) 0f else dy.coerceIn(minY, maxY)
             }
             v.translationX = dx
-            v.translationY = dy
+            // The custom signal shares its visual baseline with native icons; moving it
+            // vertically makes the three drift apart. Horizontal burn-in movement stays.
+            v.translationY = if (v === row.signal && ModuleConfig.appearance().screenshotSignal) 0f else dy
         }
     }
 

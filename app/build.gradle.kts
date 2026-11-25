@@ -24,12 +24,12 @@ android {
         // Changing this makes the module a different app to Android: an existing
         // install cannot be updated in place, and its settings and LSPosed scope
         // entry do not carry over. Uninstall the old one first.
-        applicationId = "io.github.odomu.honorduo"
+        applicationId = "io.github.rdcjed.honorduox"
         minSdk = 29
         //noinspection TargetSdkVersionUpdate
         targetSdk = 37
-        versionCode = tagVersionCode ?: 10009
-        versionName = tagVersionName ?: "1.0.9"
+        versionCode = tagVersionCode ?: 10010
+        versionName = tagVersionName ?: "1.0.10"
 
         buildConfigField("String", "REPO_SLUG", "\"$repoSlug\"")
     }

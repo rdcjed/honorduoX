@@ -373,7 +373,7 @@ class StatusPreviewView @JvmOverloads constructor(
         val type = if (a.labelInReading()) "5G" else null
         val type2 = if (dual) type else null
         var hostHeight = OutSignalRenderer.outSignalHeight(a, a.outSignalSize, density, dual)
-        if (a.stackStyle == Prefs.STACK_STYLE_ROWS && dual) {
+        if (!a.screenshotSignal && a.stackStyle == Prefs.STACK_STYLE_ROWS && dual) {
             hostHeight = Math.round(hostHeight * 1.3f)
         }
         val hostWidth = OutSignalRenderer.outSignalWidth(hostHeight, a, type, type2, dual)

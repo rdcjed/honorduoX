@@ -411,6 +411,10 @@ internal object OutSignalRenderer {
         if (sizeDp <= 0 || density <= 0f) {
             return 0
         }
+        if (a?.screenshotSignal == true) {
+            val size = sizeDp * density
+            return safePx(size * if (dual) 0.875f else 0.5f, size)
+        }
         // Two rows and their gap cost height, so the bars get a boost at the same setting.
         if (rowsStyle(a, dual)) {
             return safePx(sizeDp * density * 1.58f, sizeDp * density)
@@ -467,6 +471,10 @@ internal object OutSignalRenderer {
     ): Int {
         if (height <= 0) {
             return 0
+        }
+        if (a?.screenshotSignal == true) {
+            val designHeight = if (dual) 210f else 100f
+            return safePx(height * screenshotWidth(a, type, type2, dual) * SCREENSHOT_WIDTH_SCALE / designHeight, height.toFloat())
         }
         val inkW = outSignalInkWidth(a, type, type2, dual)
         val inkH = outSignalInkHeight(a, dual)
@@ -914,6 +922,7 @@ internal object OutSignalRenderer {
         if (bars < 0 || width <= 0 || height <= 0) {
             return false
         }
+        if (a.screenshotSignal) return drawScreenshotSignal(c, width, height, bars, dots, fg, a, type, type2)
         if (rowsStyle(a, dots >= 0)) {
             return drawStackRows(c, width, height, bars, dots, fg, a, type, type2)
         }
@@ -1021,6 +1030,84 @@ internal object OutSignalRenderer {
                 c.drawCircle(left + radius, dotCy, dotR, FILL)
             }
         }
+        return true
+    }
+
+    private const val SCREENSHOT_WIDTH_SCALE = 1.2f
+
+    private fun screenshotBarWidth(a: StatusAppearance): Float = 34f * a.outBarWidthFactor()
+
+    private fun screenshotPitch(a: StatusAppearance): Float =
+        screenshotBarWidth(a) + 21f * a.outBarPitchFactor()
+
+    private fun screenshotBarsWidth(a: StatusAppearance): Float =
+        (outColumns(a) - 1) * screenshotPitch(a) + screenshotBarWidth(a)
+
+    private fun screenshotWidth(a: StatusAppearance, type: String?, type2: String?, dual: Boolean): Float {
+        applyWeight(700)
+        TEXT.textSize = 100f
+        val label = if (a.hideNetType) 0f else maxOf(
+            measureType(type, 100f, a.typeSuffixScale),
+            if (dual) measureType(type2, 100f, a.typeSuffixScale) else 0f,
+        )
+        val activityWidth = if (a.showMobileActivity) 35f else 0f
+        return screenshotBarsWidth(a) + activityWidth + if (label > 0f) label + 16f else 0f
+    }
+
+    private fun drawScreenshotSignal(
+        c: Canvas, width: Int, height: Int, first: Int, second: Int,
+        fg: Int, a: StatusAppearance, type: String?, type2: String?,
+    ): Boolean {
+        val dual = second >= 0
+        val inkWidth = screenshotWidth(a, type, type2, dual)
+        val inkHeight = if (dual) 210f else 100f
+        val virtualWidth = width / SCREENSHOT_WIDTH_SCALE
+        val scale = min(virtualWidth / inkWidth, height / inkHeight)
+        val left = (virtualWidth - inkWidth * scale) / 2f
+        val top = (height - inkHeight * scale) / 2f
+        c.save()
+        c.scale(SCREENSHOT_WIDTH_SCALE, 1f)
+        val columns = outColumns(a)
+        val barsX = left + (inkWidth - screenshotBarsWidth(a)) * scale
+        val inactive = withAlpha(fg, a.trackAlpha)
+        val activityWidth = if (a.showMobileActivity) 35f else 0f
+        if (a.showMobileActivity) {
+            val activity = StatusState.sDataActivity
+            drawDotsActivityArrows(
+                c, barsX - 18f * scale, top + 55f * scale,
+                top + (if (dual) 155f else 100f) * scale,
+                scale, 16f, fg, withAlpha(fg, maxOf(a.trackAlpha, ACTIVITY_IDLE_ALPHA)),
+                activity == 1 || activity == 3, activity == 2 || activity == 3,
+            )
+        }
+        fun row(level: Int, label: String?, y: Float) {
+            if (!a.hideNetType && !label.isNullOrEmpty()) {
+                applyWeight(700)
+                TEXT.textSize = 100f * scale
+                TEXT.getTextBounds(label, 0, label.length, TEXT_INK)
+                val baseline = y + 100f * scale - TEXT_INK.bottom
+                val labelWidth = measureType(label, 100f * scale, a.typeSuffixScale)
+                drawType(c, label, barsX - (16f + activityWidth) * scale - labelWidth / 2f, baseline, 100f * scale, fg, a)
+            }
+            val lit = levelMapped(level, columns)
+            for (i in 0 until columns) {
+                val x = barsX + i * screenshotPitch(a) * scale
+                val barWidth = screenshotBarWidth(a) * scale
+                // The first step is a circle even after the horizontal canvas stretch.
+                val dotHeight = barWidth * SCREENSHOT_WIDTH_SCALE
+                val h = dotHeight + (100f * scale - dotHeight) * i / (columns - 1)
+                OUT_BAR.set(x, y + 100f * scale - h, x + barWidth, y + 100f * scale)
+                FILL.color = if (i < lit) fg else inactive
+                if (i == 0) {
+                    c.drawOval(OUT_BAR, FILL)
+                } else {
+                    c.drawRoundRect(OUT_BAR, barWidth / 2f, dotHeight / 2f, FILL)
+                }
+            }
+        }
+        row(first, type, top)
+        if (dual) row(second, type2, top + 110f * scale)
+        c.restore()
         return true
     }
 

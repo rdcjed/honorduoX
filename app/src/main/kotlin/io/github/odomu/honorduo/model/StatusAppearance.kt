@@ -106,7 +106,8 @@ class StatusAppearance(c: ModuleSettings) {
         Prefs.clamp(outBarPitch, Prefs.MIN_OUT_BAR_PITCH, Prefs.MAX_OUT_BAR_PITCH) / 100f
 
     /** The signal is drawn beside the glyph, i.e. handed back to the system. */
-    @JvmField val signalOutOfRing: Boolean = enabled && c.signalMode == Prefs.SIGNAL_OUT_RING
+    @JvmField val screenshotSignal: Boolean = enabled && c.screenshotSignal
+    @JvmField val signalOutOfRing: Boolean = enabled && (c.screenshotSignal || c.signalMode == Prefs.SIGNAL_OUT_RING)
 
     /** While out of ring, the module draws its own stacked reading. */
     @JvmField val stackedSignal: Boolean = enabled && c.stackedSignal
@@ -480,7 +481,7 @@ class StatusAppearance(c: ModuleSettings) {
      * Whether the module is drawing the signal outside the glyph as its own stacked
      * reading, rather than leaving the native icon alone.
      */
-    fun stackedOut(): Boolean = (signalOutOfRing && stackedSignal) ||
+    fun stackedOut(): Boolean = screenshotSignal || (signalOutOfRing && stackedSignal) ||
         (!glyph && (hasRingPart(Prefs.PART_MOBILE) || hasRingPart(Prefs.PART_SIM_1) || hasRingPart(Prefs.PART_SIM_2)))
 
     /**
@@ -500,7 +501,7 @@ class StatusAppearance(c: ModuleSettings) {
      * needs both to size its own box, and the standalone label must not be mounted on
      * top of either.
      */
-    fun labelInReading(): Boolean = stackedOut() && typeOutOfRing
+    fun labelInReading(): Boolean = screenshotSignal || (stackedOut() && typeOutOfRing)
 
     /**
      * Whether the system's own mobile-signal group has to be hidden, which is exactly

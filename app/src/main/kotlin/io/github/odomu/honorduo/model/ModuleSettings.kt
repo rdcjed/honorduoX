@@ -105,6 +105,7 @@ class ModuleSettings {
 
     /** Hides the native SIM 2 icon when both cards are present. */
     @JvmField var hideSim2 = Prefs.DEF_HIDE_SIM2
+    @JvmField var screenshotSignal = Prefs.DEF_SCREENSHOT_SIGNAL
     /** Hides the native network-type label beside the signal bars. */
     @JvmField var hideNetType = Prefs.DEF_HIDE_NET_TYPE
     @JvmField var fiveGaStyle = Prefs.DEF_FIVE_GA_STYLE
@@ -482,6 +483,7 @@ class ModuleSettings {
             hideBluetoothIcon = Prefs.DEF_HIDE_BLUETOOTH_ICON
             hidePrivacyChip = Prefs.DEF_HIDE_PRIVACY_CHIP
             hideSim2 = Prefs.DEF_HIDE_SIM2
+            screenshotSignal = Prefs.DEF_SCREENSHOT_SIGNAL
             hideNetType = Prefs.DEF_HIDE_NET_TYPE
             fiveGaStyle = Prefs.DEF_FIVE_GA_STYLE
             capsuleThreeCentre = Prefs.DEF_CAPSULE_THREE_CENTRE
@@ -694,6 +696,7 @@ class ModuleSettings {
             s.hideBluetoothIcon = p.getBoolean(Prefs.KEY_HIDE_BLUETOOTH_ICON, Prefs.DEF_HIDE_BLUETOOTH_ICON)
             s.hidePrivacyChip = p.getBoolean(Prefs.KEY_HIDE_PRIVACY_CHIP, Prefs.DEF_HIDE_PRIVACY_CHIP)
             s.hideSim2 = p.getBoolean(Prefs.KEY_HIDE_SIM2, Prefs.DEF_HIDE_SIM2)
+            s.screenshotSignal = p.getBoolean(Prefs.KEY_SCREENSHOT_SIGNAL, Prefs.DEF_SCREENSHOT_SIGNAL)
             s.hideNetType = p.getBoolean(Prefs.KEY_HIDE_NET_TYPE, Prefs.DEF_HIDE_NET_TYPE)
             s.fiveGaStyle = p.getInt(Prefs.KEY_FIVE_GA_STYLE, Prefs.DEF_FIVE_GA_STYLE)
             s.capsuleThreeCentre = p.getBoolean(
@@ -1044,6 +1047,7 @@ class ModuleSettings {
             s.hideBluetoothIcon = bundle.getBoolean(Prefs.KEY_HIDE_BLUETOOTH_ICON, Prefs.DEF_HIDE_BLUETOOTH_ICON)
             s.hidePrivacyChip = bundle.getBoolean(Prefs.KEY_HIDE_PRIVACY_CHIP, Prefs.DEF_HIDE_PRIVACY_CHIP)
             s.hideSim2 = bundle.getBoolean(Prefs.KEY_HIDE_SIM2, Prefs.DEF_HIDE_SIM2)
+            s.screenshotSignal = bundle.getBoolean(Prefs.KEY_SCREENSHOT_SIGNAL, Prefs.DEF_SCREENSHOT_SIGNAL)
             s.hideNetType = bundle.getBoolean(Prefs.KEY_HIDE_NET_TYPE, Prefs.DEF_HIDE_NET_TYPE)
             s.fiveGaStyle = bundle.getInt(Prefs.KEY_FIVE_GA_STYLE, Prefs.DEF_FIVE_GA_STYLE)
             s.capsuleThreeCentre = bundle.getBoolean(
@@ -1649,6 +1653,7 @@ class ModuleSettings {
         s.hideBluetoothIcon = hideBluetoothIcon
         s.hidePrivacyChip = hidePrivacyChip
         s.hideSim2 = hideSim2
+        s.screenshotSignal = screenshotSignal
         s.hideNetType = hideNetType
         s.fiveGaStyle = fiveGaStyle
         s.capsuleThreeCentre = capsuleThreeCentre
@@ -1838,6 +1843,7 @@ class ModuleSettings {
             Prefs.KEY_HIDE_BLUETOOTH_ICON -> hideBluetoothIcon = src.hideBluetoothIcon
             Prefs.KEY_HIDE_PRIVACY_CHIP -> hidePrivacyChip = src.hidePrivacyChip
             Prefs.KEY_HIDE_SIM2 -> hideSim2 = src.hideSim2
+            Prefs.KEY_SCREENSHOT_SIGNAL -> screenshotSignal = src.screenshotSignal
             Prefs.KEY_HIDE_NET_TYPE -> hideNetType = src.hideNetType
             Prefs.KEY_FIVE_GA_STYLE -> fiveGaStyle = src.fiveGaStyle
             Prefs.KEY_CAPSULE_THREE_CENTRE -> capsuleThreeCentre = src.capsuleThreeCentre
@@ -1993,6 +1999,7 @@ class ModuleSettings {
         putBoolean(Prefs.KEY_HIDE_BLUETOOTH_ICON, hideBluetoothIcon)
         putBoolean(Prefs.KEY_HIDE_PRIVACY_CHIP, hidePrivacyChip)
         putBoolean(Prefs.KEY_HIDE_SIM2, hideSim2)
+        putBoolean(Prefs.KEY_SCREENSHOT_SIGNAL, screenshotSignal)
         putBoolean(Prefs.KEY_HIDE_NET_TYPE, hideNetType)
         putInt(Prefs.KEY_FIVE_GA_STYLE, fiveGaStyle)
         putBoolean(Prefs.KEY_CAPSULE_THREE_CENTRE, capsuleThreeCentre)
@@ -2067,7 +2074,7 @@ class ModuleSettings {
             replaceStatusIcon == other.replaceStatusIcon && hideAlarmIcon == other.hideAlarmIcon &&
             hideBluetoothIcon == other.hideBluetoothIcon &&
             hidePrivacyChip == other.hidePrivacyChip &&
-            hideSim2 == other.hideSim2 && hideNetType == other.hideNetType &&
+            hideSim2 == other.hideSim2 && screenshotSignal == other.screenshotSignal && hideNetType == other.hideNetType &&
             fiveGaStyle == other.fiveGaStyle && capsuleThreeCentre == other.capsuleThreeCentre &&
             // Colors & thresholds
             roleColors == other.roleColors && roleColorsTemp == other.roleColorsTemp && lowThreshold == other.lowThreshold &&
