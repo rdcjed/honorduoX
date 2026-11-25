@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="screenshot_signal_title">Stacked signal (reference style)</string>
+    <string name="screenshot_signal_title">Stacked signal (original signal style)</string>
     <string name="screenshot_signal_summary">Show each SIM on its own row with network type and rounded bars</string>
     <string name="drawing_order_title">In-ring order</string>
     <string name="app_name">HonorDuoX</string>

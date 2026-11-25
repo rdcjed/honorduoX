@@ -60,7 +60,7 @@
     <string name="stack_label_title">网络类型样式</string>
     <string name="stack_label_left">单独显示</string>
     <string name="stack_label_above">信号上方</string>
-    <string name="screenshot_signal_title">信号堆叠（截图样式）</string>
+    <string name="screenshot_signal_title">信号堆叠（原信号样式）</string>
     <string name="screenshot_signal_summary">双卡上下显示，每张卡显示网络类型和圆头信号</string>
     <string name="stack_style_title">堆叠风格</string>
     <string name="stack_style_dots">圆点副卡</string>

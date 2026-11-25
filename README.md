@@ -44,6 +44,7 @@
 
 ## 致谢
 
+- 感谢 [Xposed-Modules-Repo](https://github.com/Xposed-Modules-Repo) 提供源码项目；
 - 感谢 [HyperDuo](https://github.com/yixing233/HyperDuo) 项目及其开源贡献者；
 - 感谢 [Miuix](https://github.com/Design-Compute/Miuix) 提供的现代化界面组件支持；
 - 感谢 [LSPosed](https://github.com/LSPosed/LSPosed) 与 [libxposed](https://github.com/libxposed) 框架生态。
