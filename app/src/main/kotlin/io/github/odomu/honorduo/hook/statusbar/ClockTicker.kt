@@ -19,7 +19,9 @@ import io.github.odomu.honorduo.hook.core.SystemUiHook
 import io.github.odomu.honorduo.hook.tracker.BarVisibility
 import io.github.odomu.honorduo.hook.tracker.ScreenStateTracker.addListener
 import io.github.odomu.honorduo.hook.tracker.ScreenStateTracker.isScreenOn
+import io.github.odomu.honorduo.model.ClockPattern
 import io.github.odomu.honorduo.model.ModuleConfig
+import io.github.odomu.honorduo.model.StatusAppearance
 import io.github.odomu.honorduo.model.Prefs
 import io.github.odomu.honorduo.model.StatusState
 import java.text.DateFormat
@@ -116,7 +118,8 @@ internal object ClockTicker {
         main.post(tickRunnable)
     }
 
-    fun formatDate(now: Date, format: Int): String {
+    fun formatDate(now: Date, format: Int, custom: String = ""): String {
+        ClockPattern.format(custom, now)?.let { return it }
         refreshDateFormats()
         val fmt = when (format) {
             Prefs.CLOCK_DATE_SLASH_YMD -> FMT_SLASH_YMD
@@ -173,11 +176,12 @@ internal object ClockTicker {
         dateFormatType: Int = Prefs.DEF_CLOCK_DATE_FORMAT,
         weekdayFormatType: Int = Prefs.DEF_CLOCK_WEEKDAY_FORMAT,
         lunar: Boolean = false,
+        appearance: StatusAppearance = ModuleConfig.appearance(),
     ): Array<String> {
         val now = Calendar.getInstance().time
         return arrayOf(
-            format(now),
-            if (date) formatDate(now, dateFormatType) else "",
+            format(now, appearance),
+            if (date) formatDate(now, dateFormatType, appearance.clockDatePattern) else "",
             if (weekday) formatWeekday(now, weekdayFormatType) else "",
             if (lunar) formatLunar(now) else "",
         )
@@ -187,6 +191,10 @@ internal object ClockTicker {
     fun refresh() {
         try {
             publishNow()
+            if (started && isScreenOn && ModuleConfig.appearance().clockTicksEverySecond) {
+                main.removeCallbacks(tickRunnable)
+                main.postDelayed(tickRunnable, millisToNextTick())
+            }
         } catch (_: Throwable) {
         }
     }
@@ -200,7 +208,7 @@ internal object ClockTicker {
             if (BarVisibility.shown && !StatusBarRowManager.suppressed && timeFormat != null && usesClock()) publishNow()
             // Recomputed either way: the style can be switched at any moment and
             // the next tick should already be aligned to the boundary.
-            delay = millisToNextMinute()
+            delay = millisToNextTick()
         } catch (_: Throwable) {
             // keep ticking
         } finally {
@@ -225,39 +233,35 @@ internal object ClockTicker {
      * clock follows the system setting, and a second clock that disagreed with
      * every other one on the phone would read as a bug.
      */
-    private fun seconds(): Boolean = ModuleConfig.appearance().clockSeconds
-
-    private fun format(now: Date): String {
-        if (!seconds()) {
+    private fun format(now: Date, a: StatusAppearance): String {
+        ClockPattern.format(a.clockTimePattern, now)?.let { return it }
+        if (!a.clockSeconds) {
             return timeFormat?.format(now).orEmpty()
         }
         // A separate pattern rather than a flag on the locale formatter: the system
         // format is "the time without seconds", and there is no portable way to ask it
         // for one more field. The 24-hour choice is still the system's.
-        val pattern = if (is24Hour) "HH:mm:ss" else "h:mm:ss"
-        return SimpleDateFormat(pattern, Locale.getDefault()).format(now)
+        return ClockPattern.format(ClockPattern.timeWithSeconds(is24Hour), now).orEmpty()
     }
 
     /** Milliseconds from now to the top of the next minute. */
-    private fun millisToNextMinute(): Long {
-        val now = Calendar.getInstance()
-        val elapsed = now.get(Calendar.SECOND) * 1000L + now.get(Calendar.MILLISECOND)
-        return MINUTE_MS - elapsed
+    private fun millisToNextTick(): Long {
+        val period = if (ModuleConfig.appearance().clockTicksEverySecond) 1_000L else MINUTE_MS
+        return period - System.currentTimeMillis() % period
     }
 
     /**
-     * Publishes the glyph's time, minutes only: "show seconds" is a bar-clock feature
-     * and never reaches the glyph, which has no room for two more digits.
+     * The glyph keeps its compact default. An explicit pattern can include seconds.
      */
     private fun publishNow() {
         val now = Calendar.getInstance().time
         val a = ModuleConfig.appearance()
-        StatusState.sClockDate = formatDate(now, a.clockDateFormat)
+        StatusState.sClockDate = formatDate(now, a.clockDateFormat, a.clockDatePattern)
         StatusState.sClockWeekday = formatWeekday(now, a.clockWeekdayFormat)
         StatusState.sClockLunar = formatLunar(now)
         if (timeFormat == null) return
         val format = timeFormat ?: return
-        val time = format.format(now)
+        val time = ClockPattern.format(a.clockTimePattern, now) ?: format.format(now)
         StatusState.sClockText = time
         SystemUiHook.invalidateHosts()
     }

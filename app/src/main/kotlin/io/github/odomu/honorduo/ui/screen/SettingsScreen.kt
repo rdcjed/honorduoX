@@ -42,10 +42,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,9 +65,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.Dp
@@ -103,13 +105,11 @@ import io.github.odomu.honorduo.ui.manager.UpdateState
 import io.github.odomu.honorduo.ui.manager.rememberBackupManager
 import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.basic.Icon
-import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.SnackbarDuration
 import top.yukonga.miuix.kmp.basic.SnackbarHost
 import top.yukonga.miuix.kmp.basic.SnackbarHostState
-import top.yukonga.miuix.kmp.basic.TopAppBar
-import top.yukonga.miuix.kmp.basic.rememberTopAppBarState
+import top.yukonga.miuix.kmp.basic.SmallTopAppBar
 import top.yukonga.miuix.kmp.nav.core.rememberNavController
 import top.yukonga.miuix.kmp.shader.isRuntimeShaderSupported
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -157,17 +157,10 @@ fun SettingsScreen(repository: SettingsStore) {
     // The supertype is spelled out because the reified parameter is otherwise
     // inferred from the argument, and a stack declared as the first concrete
     // route cannot hold the other three once the process is recreated.
-    val isFirst = remember { repository.isFirstLaunch() }
-    LaunchedEffect(Unit) {
-        if (isFirst) {
-            repository.markFirstLaunchDone()
-        }
-    }
-    val initialRoute = if (isFirst) Route.About else Route.Layout
-    val nav = rememberNavController<Route>(initialRoute)
+    val nav = rememberNavController<Route>(SettingsTab.Layout.route)
     val openTab = SettingsTab.entries.firstOrNull {
         it.route == nav.backStack.lastOrNull()
-    } ?: if (isFirst) SettingsTab.About else SettingsTab.Layout
+    } ?: SettingsTab.Layout
     val pageStateHolder = rememberSaveableStateHolder()
     BackHandler(enabled = nav.backStack.size > 1) { nav.pop() }
 
@@ -625,20 +618,15 @@ private fun SettingsPage(
     onRestart: () -> Unit,
     content: LazyListScope.() -> Unit,
 ) {
-    val scrollBehavior = MiuixScrollBehavior(rememberTopAppBarState())
-    LaunchedEffect(isTop) {
-        if (isTop) {
-            scrollBehavior.state.heightOffset = 0f
-            scrollBehavior.state.contentOffset = 0f
+    val listState = rememberLazyListState()
+    val blurDistance = with(LocalDensity.current) { 48.dp.toPx() }
+    val scrollProgress by remember(listState, blurDistance) {
+        derivedStateOf {
+            if (listState.firstVisibleItemIndex > 0) 1f
+            else (listState.firstVisibleItemScrollOffset / blurDistance).coerceIn(0f, 1f)
         }
     }
-    val pageTitle = stringResource(
-        when (tab) {
-            SettingsTab.About -> R.string.tab_home
-            SettingsTab.Layout -> R.string.tab_layout
-            SettingsTab.Settings -> R.string.tab_settings
-        }
-    )
+    val pageTitle = stringResource(tab.labelRes)
     val restartTitle = stringResource(R.string.restart_title)
     val surfaceColor = MiuixTheme.colorScheme.surface
     val context = LocalContext.current
@@ -648,32 +636,14 @@ private fun SettingsPage(
 
     Scaffold(
         topBar = {
-            // Three layers, and the thing that makes the reference look the way it does is
-            // that all three are tied to the SCROLL, not to a constant:
-            //
-            //   collapsedFraction == 0 (page at rest under an expanded bar)
-            //       the light 6dp layer is fully present and the 16dp masked layer is
-            //       invisible - a bar you can see the page through;
-            //   collapsedFraction == 1 (content scrolled under the bar)
-            //       the light layer has faded out and the masked layer is fully present -
-            //       the bar thickens as things pass beneath it.
-            //
-            // That hand-off is the effect. Two fixed-opacity layers, which is what this had
-            // before, give a bar that is blurry in exactly the same way whether anything is
-            // behind it or not - legible, but flat, and that flatness is what "not the same
-            // as the reference" looks like.
-            val collapsed = scrollBehavior.state.collapsedFraction.coerceIn(0f, 1f)
-            // clipToBounds on the container: the masked layer is deliberately drawn taller
-            // than the bar so its gradient has room to fade, and without a clip on the
-            // parent that overflow is painted below the bar - a hard horizontal edge across
-            // the top of the page.
+            // The bar stays compact while the backdrop thickens as the list scrolls under it.
             Box(modifier = Modifier.clipToBounds()) {
                 if (barBlurSupported) {
-                    // Light pass: present while the bar is expanded, gone once it collapses.
+                    // Light blur at rest.
                     Box(
                         modifier = Modifier
                             .matchParentSize()
-                            .graphicsLayer { alpha = 1f - collapsed }
+                            .graphicsLayer { alpha = 1f - scrollProgress }
                             .drawPlainBackdrop(
                                 backdrop = pageBackdrop,
                                 shape = { RectangleShape },
@@ -681,7 +651,7 @@ private fun SettingsPage(
                                 onDrawSurface = { drawRect(surfaceColor.copy(alpha = 0.55f)) },
                             ),
                     )
-                    // Heavy pass: the masked 16dp blur, visible only as the bar collapses.
+                    // Stronger blur as content moves under the title.
                     Box(
                         modifier = Modifier
                             .matchParentSize()
@@ -692,7 +662,7 @@ private fun SettingsPage(
                             // overflow shows as a hard edge under the bar - the boundary
                             // that was visible across the top of the page.
                             .expandDrawHeight(1.184625f)
-                            .graphicsLayer { alpha = collapsed }
+                            .graphicsLayer { alpha = scrollProgress }
                             .drawPlainBackdrop(
                                 backdrop = pageBackdrop,
                                 shape = { RectangleShape },
@@ -716,20 +686,18 @@ private fun SettingsPage(
                             .background(surfaceColor),
                     )
                 }
-                TopAppBar(
+                SmallTopAppBar(
                     title = pageTitle,
                     // Transparent on purpose: the bar's own background is now the two
                     // layers above (or the opaque fallback when shaders are unsupported),
                     // and a second opaque pass would hide the blur entirely.
                     color = Color.Transparent,
-                    largeTitle = pageTitle,
-                    scrollBehavior = scrollBehavior,
                     actions = {
                         GlassIconButton(
                             icon = ImageVector.vectorResource(R.drawable.ic_lucide_refresh_cw),
                             description = restartTitle,
                             backdrop = if (barBlurSupported) pageBackdrop else null,
-                            collapsedFraction = collapsed,
+                            collapsedFraction = scrollProgress,
                             // The dialog is the only place a kill can be started, so a
                             // stale failure from last time must not greet the user.
                             onClick = onRestart,
@@ -744,17 +712,17 @@ private fun SettingsPage(
             Modifier
                 .fillMaxSize()
                 // Record the list alone: the top bar samples this backdrop.
-                .layerBackdrop(pageBackdrop)
-                .nestedScroll(scrollBehavior.nestedScrollConnection),
+                .layerBackdrop(pageBackdrop),
         ) {
             SectionList(
                 contentPadding = PaddingValues(
                     start = 12.dp,
-                    top = padding.calculateTopPadding() + 12.dp,
+                    top = padding.calculateTopPadding() + if (tab == SettingsTab.Layout) 0.dp else 8.dp,
                     end = 12.dp,
-                    bottom = bottomPadding + 24.dp,
+                    bottom = bottomPadding + if (tab == SettingsTab.Layout) 12.dp else 24.dp,
                 ),
                 isTop = isTop,
+                listState = listState,
                 content = content,
             )
         }
@@ -763,7 +731,7 @@ private fun SettingsPage(
 
 /**
  * Vertical alpha mask for the top bar's progressive blur: opaque at the bar's top,
- * fading to nothing by half its (expanded) height.
+ * fading to nothing by half its height.
  *
  * `smoothstep(size.y, size.y * 0.5, coord.y)` runs from 1 at `coord.y == size.y` to 0
  * at half that, which is the direction that matters - the mask has to be DENSE where the

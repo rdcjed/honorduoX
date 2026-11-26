@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -74,9 +74,9 @@ fun isDarkTheme(): Boolean = MiuixTheme.colorSchemeMode == ColorSchemeMode.Dark 
 fun SectionList(
     contentPadding: PaddingValues,
     isTop: Boolean,
+    listState: LazyListState,
     content: LazyListScope.() -> Unit,
 ) {
-    val listState = rememberLazyListState()
     LaunchedEffect(isTop) {
         if (isTop) listState.scrollToItem(0)
     }

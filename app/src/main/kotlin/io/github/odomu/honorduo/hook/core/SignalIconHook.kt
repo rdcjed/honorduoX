@@ -120,7 +120,7 @@ internal object SignalIconHook {
             val self = chain.thisObject
             val target = chain.getArg(0)
             val a = ModuleConfig.appearance()
-            if ((a.glyph || a.typeOutOfRing) && a.ownsType() && self != null && target != null) {
+            if (a.glyph && a.typeInRing && a.ownsType() && self != null && target != null) {
                 val type = Refl.get(sUnitTypeField, self)
                 if (type === target && type is View) {
                     StatusBarIconManager.hide(type)

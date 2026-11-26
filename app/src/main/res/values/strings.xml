@@ -11,7 +11,6 @@
     <string name="group_out_signal">环外信号</string>
     <string name="group_track">底纹</string>
 
-    <string name="tab_layout">排布</string>
     <string name="tab_settings">设置</string>
     <string name="section_appearance">基础外观</string>
     <string name="card_appearance_summary">整体尺寸、胶囊内边距、胶囊长度及位置微调</string>
@@ -24,9 +23,9 @@
     <string name="card_type_title">网络类型</string>
     <string name="card_type_summary">网络类型位置、单独显示/信号上方、字号大小、A比例、字重与边距</string>
     <string name="card_readouts_title">硬件读数</string>
-    <string name="card_readouts_summary">状态栏网速字号、充电功率、运行功率、电池温度与屏幕帧率</string>
+    <string name="card_readouts_summary">状态栏网速字号、硬件读数开关与显示位置</string>
     <string name="card_clock_title">时钟日期</string>
-    <string name="card_clock_summary">时钟秒数、4种日期格式、农历、星期格式与时间偏移微调</string>
+    <string name="card_clock_summary">自定义时间和日期格式、农历、星期格式与位置微调</string>
 
     <string name="drawing_order_title">环内排序</string>
 
@@ -302,7 +301,7 @@
     <string name="clock_seconds_summary">在时间后追加秒数；开启后按时钟每秒刷新。</string>
     <string name="clock_date_title">显示日期</string>
     <string name="clock_date_summary">叠加在系统时钟上方；时间放进环内或胶囊后不显示。</string>
-    <string name="clock_date_format_title">日期格式</string>
+    <string name="clock_date_format_title">自定义日期格式</string>
     <string name="clock_date_format_slash_md">月/日</string>
     <string name="clock_date_format_slash_ymd">年/月/日</string>
     <string name="clock_date_format_zh_md">月日</string>
@@ -576,4 +575,15 @@
     <string name="status_indicator_summary">关闭后隐藏状态栏里的该项图标</string>
     <string name="status_icon_spacing_title">状态栏图标间距</string>
     <string name="status_icon_spacing_summary">调整右侧状态栏图标之间的距离。负值更紧凑，正值更宽松。</string>
+    <string name="clock_time_format_title">自定义时间格式</string>
+    <string name="clock_time_pattern_hint">例如 HH:mm:ss、HH:mm 或 h:mm a。HH 是 24 小时，h 是 12 小时，ss 是秒。</string>
+    <string name="clock_date_pattern_hint">例如 M月d日、yyyy-MM-dd 或 MM/dd。M 表示月份，d 表示日期。</string>
+    <string name="clock_pattern_preview">预览 %1$s</string>
+    <string name="clock_pattern_invalid">无法识别此格式，请检查字母大小写和引号。</string>
+    <string name="clock_pattern_default">恢复默认格式</string>
+    <string name="clock_pattern_save">保存</string>
+    <string name="readout_position_off">关闭</string>
+    <string name="readout_position_left">状态栏左侧</string>
+    <string name="readout_position_right">状态栏右侧</string>
+    <string name="drawing_outside_empty">暂无显示中的环外组件，可在「设置」中开启。</string>
 </resources>

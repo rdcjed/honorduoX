@@ -201,13 +201,13 @@ internal object BarClockManager {
         if (!ScreenStateTracker.isScreenOn || !BarVisibility.shown ||
             clocks.keys.none { it.isShown && usesRenderer(it, a) }
         ) return
-        val period = if (a.clockSeconds) 1_000L else 60_000L
+        val period = if (a.clockTicksEverySecond) 1_000L else 60_000L
         val now = System.currentTimeMillis()
         handler.postDelayed(tick, period - now % period + 20L)
     }
 
     private fun updateBarClock(view: BarClockView, a: StatusAppearance, native: TextView, availableWidth: Int = native.measuredWidth) {
-        val texts = ClockTicker.barTexts(a.clockDate, a.clockWeekday, a.clockDateFormat, a.clockWeekdayFormat, a.clockLunar)
+        val texts = ClockTicker.barTexts(a.clockDate, a.clockWeekday, a.clockDateFormat, a.clockWeekdayFormat, a.clockLunar, a)
         val userScale = a.clockSize / Prefs.DEF_CLOCK_SIZE.toFloat()
         val ink = StatusBarIconManager.foreground(native, native.currentTextColor)
         val isDark = GlyphInk.isDarkBackground(ink)

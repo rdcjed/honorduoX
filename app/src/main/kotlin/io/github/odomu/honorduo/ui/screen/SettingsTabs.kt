@@ -855,7 +855,7 @@ fun enabledCount(settings: ModuleSettings): Int {
         a.perfTemp,
         a.perfCurrent,
         a.perfFps,
-        a.clockSeconds || a.clockDate || a.clockWeekday || a.clockLunar || a.clockWeather,
+        a.clockTimePattern.isNotEmpty() || a.clockSeconds || a.clockDate || a.clockWeekday || a.clockLunar || a.clockWeather,
         a.shadeHidePower || a.shadeHideBell || a.shadeLunar || a.shadeWeather,
         a.replaceStatusIcon || a.hideAlarmIcon || a.hideBluetoothIcon,
     ).count { it }

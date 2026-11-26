@@ -126,6 +126,7 @@ internal object StatusBarRowManager {
                         r.row.viewTreeObserver.removeOnWindowVisibilityChangeListener(it)
                     }
                     resetBurnIn(r)
+                    removeLeftReadouts(r)
                 }
             }
         }
@@ -203,6 +204,7 @@ internal object StatusBarRowManager {
         row.signal?.visibility = View.GONE
         row.perf?.visibility = View.GONE
         row.fps?.visibility = View.GONE
+        row.leftReadouts?.visibility = View.GONE
         row.type?.visibility = View.GONE
     }
 
@@ -499,8 +501,9 @@ internal object StatusBarRowManager {
             slots[0] >= 0 -> 0
             else -> dataSlot
         }
-        signal.type = row.state.slotTypes[firstSlot].ifEmpty { fallback }
-        signal.type2 = if (a.dataSimOnly || !dual) null else row.state.slotTypes[1].ifEmpty { fallback }
+        val showType = !a.typeHideOnWifi || row.state.wifiLevel < 1
+        signal.type = if (showType) row.state.slotTypes[firstSlot].ifEmpty { fallback } else null
+        signal.type2 = if (showType && dual && !a.dataSimOnly) row.state.slotTypes[1].ifEmpty { fallback } else null
         signal.activityRow = SignalActivity.row(
             a.screenshotSignal && StatusState.sMobileDataEnabled,
             StatusState.sDataSlot, firstSlot, dual,
@@ -594,9 +597,8 @@ internal object StatusBarRowManager {
     }
 
     private class ActivePerfItem(
-        val id: Int,
+        val part: Int,
         val text: String,
-        val isTemp: Boolean = false,
         val isHighTemp: Boolean = false,
     )
 
@@ -612,6 +614,7 @@ internal object StatusBarRowManager {
      */
     private fun syncPerfReadouts(row: Row, a: StatusAppearance) {
         if (!a.perfPairShown()) {
+            removeLeftReadouts(row)
             remove(row, row.perf)
             remove(row, row.fps)
             row.perf = null
@@ -623,10 +626,11 @@ internal object StatusBarRowManager {
         val charging = StatusState.sChargingAttached
         val wattsWanted = (charging && (a.perfPower || (!a.glyph && a.hasRingPart(Prefs.PART_POWER)))) ||
             (!charging && (a.perfRunning || (!a.glyph && a.hasRingPart(Prefs.PART_RUNNING))))
-        val wattsInGlyph = a.glyph && a.placed(if (charging) Prefs.PART_POWER else Prefs.PART_RUNNING)
+        val wattsPart = if (charging) Prefs.PART_POWER else Prefs.PART_RUNNING
+        val wattsInGlyph = a.glyph && a.placed(wattsPart)
         val showWatts = wattsWanted && !wattsInGlyph && !StatusState.sChargePowerW.isNaN()
         val powerItem = if (showWatts) {
-            ActivePerfItem(Prefs.PERF_ITEM_POWER, String.format(Locale.US, "%.1fW", StatusState.sChargePowerW))
+            ActivePerfItem(wattsPart, String.format(Locale.US, "%.1fW", StatusState.sChargePowerW))
         } else null
 
         val tempWanted = !a.perfTempChargingOnly || charging
@@ -636,9 +640,8 @@ internal object StatusBarRowManager {
             StatusState.sBatteryTempC != StatusState.TEMP_UNKNOWN
         val tempItem = if (showTemp) {
             ActivePerfItem(
-                Prefs.PERF_ITEM_TEMP,
+                Prefs.PART_TEMP,
                 "${StatusState.sBatteryTempC}\u00B0C",
-                isTemp = true,
                 isHighTemp = a.roleColorsTemp && StatusState.sBatteryHot,
             )
         } else null
@@ -648,28 +651,29 @@ internal object StatusBarRowManager {
             !currentInGlyph && StatusState.sCurrentUa != StatusState.CURRENT_UNKNOWN
         val currentText = if (showCurrent) StatusState.currentText(a.currentUnit, a.currentPositive) else null
         val currentItem = if (!currentText.isNullOrEmpty()) {
-            ActivePerfItem(Prefs.PERF_ITEM_CURRENT, currentText)
+            ActivePerfItem(Prefs.PART_CURRENT, currentText)
         } else null
 
-        val voltageWanted = a.perfVoltage
-        val showVoltage = voltageWanted && StatusState.sVoltageMv > 0
+        val voltageInGlyph = a.glyph && a.placed(Prefs.PART_VOLTAGE)
+        val voltageWanted = a.perfVoltage || (!a.glyph && a.hasRingPart(Prefs.PART_VOLTAGE))
+        val showVoltage = voltageWanted && !voltageInGlyph && StatusState.sVoltageMv > 0
         val voltageText = if (showVoltage) StatusState.voltageText() else null
         val voltageItem = if (!voltageText.isNullOrEmpty()) {
-            ActivePerfItem(Prefs.PERF_ITEM_VOLTAGE, voltageText)
+            ActivePerfItem(Prefs.PART_VOLTAGE, voltageText)
         } else null
 
         val fpsWanted = a.perfFps || (!a.glyph && a.hasRingPart(Prefs.PART_FPS))
         val fpsInGlyph = a.glyph && a.drawsPart(Prefs.PART_FPS, row.state.level, row.state.charging, row.state.wifiLevel, row.state.mobileType, row.state.sims)
         val showFps = fpsWanted && !fpsInGlyph && StatusState.sFps > 0
         val fpsItem = if (showFps) {
-            ActivePerfItem(Prefs.PERF_ITEM_FPS, StatusState.sFps.toString())
+            ActivePerfItem(Prefs.PART_FPS, StatusState.sFps.toString())
         } else null
 
         val signalInGlyph = a.glyph && a.placed(Prefs.PART_SIGNAL)
         val signalWanted = (a.perfSignal || (!a.glyph && a.hasRingPart(Prefs.PART_SIGNAL))) && !signalInGlyph
         val signalText = if (signalWanted) StatusState.signalText() else null
         val signalItem = if (!signalText.isNullOrEmpty()) {
-            ActivePerfItem(Prefs.PERF_ITEM_SIGNAL, signalText)
+            ActivePerfItem(Prefs.PART_SIGNAL, signalText)
         } else null
 
         // The headset battery is a reading like the rest: drawn inside the glyph when
@@ -677,7 +681,7 @@ internal object StatusBarRowManager {
         val btLevel = StatusState.sBluetoothBatteryLevel
         val btWanted = a.perfBt || (!a.glyph && a.hasRingPart(Prefs.PART_BT))
         val btItem = if (btWanted && !(a.glyph && a.placed(Prefs.PART_BT)) && btLevel in 0..100) {
-            ActivePerfItem(Prefs.PERF_ITEM_BT, "$btLevel%")
+            ActivePerfItem(Prefs.PART_BT, "$btLevel%")
         } else null
 
         val activeList = ArrayList<ActivePerfItem>(7)
@@ -693,11 +697,10 @@ internal object StatusBarRowManager {
             }
         }
 
-        val group1 = activeList.take(2)
-        val group2 = if (activeList.size > 2) activeList.drop(2).take(2) else emptyList()
-
-        row.perf = applyReadoutGroup(row, a, row.perf, group1, density)
-        row.fps = applyReadoutGroup(row, a, row.fps, group2, density)
+        val (left, right) = activeList.partition { a.readoutOnLeft(it.part) }
+        row.perf = applyReadoutGroup(row, a, row.perf, right.take(2), density)
+        row.fps = applyReadoutGroup(row, a, row.fps, right.drop(2).take(2), density)
+        syncLeftReadouts(row, a, left, density)
     }
 
     private fun applyReadoutGroup(
@@ -706,16 +709,21 @@ internal object StatusBarRowManager {
         existing: PerfLabel?,
         items: List<ActivePerfItem>,
         density: Float,
+        leftStrip: LinearLayout? = null,
     ): PerfLabel? {
         if (items.isEmpty()) {
             remove(row, existing)
             return null
         }
-        val label = inRow(row, existing) ?: run {
+        val label = existing?.takeIf { it.parent === (leftStrip ?: row.container) } ?: run {
             remove(row, existing)
             PerfLabel(row.row.context).also {
-                insertBefore(row, it)
-                row.outOrderApplied = null
+                if (leftStrip != null) {
+                    leftStrip.addView(it)
+                } else {
+                    insertBefore(row, it)
+                    row.outOrderApplied = null
+                }
             }
         }
         label.host = row.state
@@ -727,7 +735,7 @@ internal object StatusBarRowManager {
         }
         label.setLineSpacing(a.perfLineGap * density, 1f)
 
-        val baseColor = row.state.foreground()
+        val baseColor = StatusBarIconManager.foreground(label, row.state.foreground())
         val highTempItem = items.firstOrNull { it.isHighTemp }
         if (label.text.toString() != text) {
             if (highTempItem != null) {
@@ -750,16 +758,64 @@ internal object StatusBarRowManager {
                 label.setTextColor(baseColor)
             }
         }
-        size(label, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, a.outSignalMargin, 0, density)
+        label.setTextColor(baseColor)
+        val gap = if (leftStrip != null) maxOf(a.outSignalMargin, 2) else a.outSignalMargin
+        size(label, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, gap, 0, density)
         label.visibility = View.VISIBLE
         StatusBarIconManager.release(label)
         return label
     }
+    /** The normal status bar lays its native clock out before the central icon area. */
+    private fun syncLeftReadouts(row: Row, a: StatusAppearance, items: List<ActivePerfItem>, density: Float) {
+        if (items.isEmpty()) {
+            removeLeftReadouts(row)
+            return
+        }
+        var contents = row.row.parent as? ViewGroup
+        while (contents != null && !contents.javaClass.name.endsWith("HwStatusbarContents")) {
+            contents = contents.parent as? ViewGroup
+        }
+        val clock = contents?.findViewById<View>(StatusBarIconManager.clockId)
+        val parent = clock?.parent as? LinearLayout
+        if (clock == null || parent == null || parent.orientation != LinearLayout.HORIZONTAL ||
+            StatusBarIconManager.isKeyguardTree(clock)
+        ) {
+            removeLeftReadouts(row)
+            return
+        }
+        val strip = row.leftReadouts?.takeIf { it.parent === parent } ?: run {
+            removeLeftReadouts(row)
+            LinearLayout(parent.context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                val params = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                ).apply {
+                    gravity = Gravity.CENTER_VERTICAL
+                    marginStart = (3f * density).roundToInt()
+                }
+                parent.addView(this, parent.indexOfChild(clock) + 1, params)
+                row.leftReadouts = this
+            }
+        }
+        strip.visibility = View.VISIBLE
+        val groups = items.chunked(2)
+        while (strip.childCount > groups.size) strip.removeViewAt(strip.childCount - 1)
+        for ((index, group) in groups.withIndex()) {
+            applyReadoutGroup(row, a, strip.getChildAt(index) as? PerfLabel, group, density, strip)
+        }
+    }
+
+    private fun removeLeftReadouts(row: Row) {
+        val strip = row.leftReadouts ?: return
+        (strip.parent as? ViewGroup)?.removeView(strip)
+        row.leftReadouts = null
+    }
+
     /** The network type, when it is drawn outside the glyph. */
     private fun syncType(row: Row, a: StatusAppearance) {
-        if (!a.typeOutOfRing || a.stackTypeShown() || a.labelInReading() ||
-            (a.signalOutOfRing && !a.stackedSignal)
-        ) {
+        if (!a.standaloneType() || StatusState.airplaneMode()) {
+            StatusBarIconManager.settleNativeTypes(row.container, false)
             remove(row, row.type)
             row.type = null
             return
@@ -775,7 +831,9 @@ internal object StatusBarRowManager {
         row.type = label
         label.host = row.state
         val text = row.state.mobileType
-        if (text.isEmpty()) {
+        val hiddenOnWifi = a.typeHideOnWifi && row.state.wifiLevel >= 1
+        StatusBarIconManager.settleNativeTypes(row.container, hiddenOnWifi || text.isNotEmpty())
+        if (text.isEmpty() || hiddenOnWifi) {
             StatusBarIconManager.hide(label)
             return
         }
@@ -850,6 +908,7 @@ internal object StatusBarRowManager {
     }
 
     private fun unmountOutViews(row: Row) {
+        removeLeftReadouts(row)
         remove(row, row.signal)
         remove(row, row.perf)
         remove(row, row.type)
@@ -1072,8 +1131,11 @@ internal object StatusBarRowManager {
         val a = ModuleConfig.appearance()
         for (row in snapshot()) {
             row.state.refresh()
-            if (a.screenshotSignal && row.signal != null) {
+            if (a.stackedOut() && row.signal != null) {
                 syncSignal(row, a)
+            }
+            if (a.standaloneType() || row.type != null) {
+                syncType(row, a)
             }
             if (a.perfPairShown()) {
                 syncPerfReadouts(row, a)
@@ -1125,6 +1187,7 @@ internal object StatusBarRowManager {
         var glyph: GlyphView? = null
         var signal: OutSignalView? = null
         var perf: PerfLabel? = null
+        var leftReadouts: LinearLayout? = null
 
         /**
          * The frame rate, in a view of its own.

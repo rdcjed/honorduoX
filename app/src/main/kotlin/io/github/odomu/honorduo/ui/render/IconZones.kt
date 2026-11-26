@@ -13,6 +13,7 @@ package io.github.odomu.honorduo.ui.render
 
 import io.github.odomu.honorduo.model.ModuleSettings
 import io.github.odomu.honorduo.model.Prefs
+import io.github.odomu.honorduo.model.ReadoutPlacement
 import io.github.odomu.honorduo.model.StatusAppearance
 import io.github.odomu.honorduo.ui.render.geometry.CapsuleGeometry
 import io.github.odomu.honorduo.ui.render.geometry.IconGeometry
@@ -519,6 +520,7 @@ object IconZones {
             lists.add(current.ringZones[z].filterTo(ArrayList()) { it != id })
         }
         lists[zone].add(0, id)
+        next.leftReadouts = ReadoutPlacement.setLeft(next.leftReadouts, id, false)
         next.ringZones = Array(Prefs.ZONE_COUNT) { z -> lists[z].toIntArray() }
         next.enabled = true
         next.mergeIcons = true

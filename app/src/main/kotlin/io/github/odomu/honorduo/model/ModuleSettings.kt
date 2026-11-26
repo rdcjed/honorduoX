@@ -347,6 +347,9 @@ class ModuleSettings {
     var clockLunar = Prefs.DEF_CLOCK_LUNAR
     @JvmField
     var clockDateFormat = Prefs.DEF_CLOCK_DATE_FORMAT
+    var clockTimePattern = ""
+    var clockDatePattern = ""
+    var leftReadouts = 0
     @JvmField
     var clockWeekdayFormat = Prefs.DEF_CLOCK_WEEKDAY_FORMAT
 
@@ -527,6 +530,9 @@ class ModuleSettings {
             clockRowGap = Prefs.DEF_CLOCK_ROW_GAP
             clockLunar = Prefs.DEF_CLOCK_LUNAR
             clockDateFormat = Prefs.DEF_CLOCK_DATE_FORMAT
+            clockTimePattern = ""
+            clockDatePattern = ""
+            leftReadouts = 0
             clockWeekdayFormat = Prefs.DEF_CLOCK_WEEKDAY_FORMAT
             clockWeekdayColorOnDark = Prefs.DEF_COLOR_CLOCK
             clockWeekdayColorOnLight = Prefs.DEF_COLOR_CLOCK
@@ -767,6 +773,9 @@ class ModuleSettings {
             s.clockRowGap = Prefs.clamp(p.getInt(Prefs.KEY_CLOCK_ROW_GAP, Prefs.DEF_CLOCK_ROW_GAP), Prefs.MIN_CLOCK_ROW_GAP, Prefs.MAX_CLOCK_ROW_GAP)
             s.clockLunar = p.getBoolean(Prefs.KEY_CLOCK_LUNAR, Prefs.DEF_CLOCK_LUNAR)
             s.clockDateFormat = p.getInt(Prefs.KEY_CLOCK_DATE_FORMAT, Prefs.DEF_CLOCK_DATE_FORMAT)
+            s.clockTimePattern = p.getString(Prefs.KEY_CLOCK_TIME_PATTERN, "").orEmpty().take(ClockPattern.MAX_LENGTH)
+            s.clockDatePattern = p.getString(Prefs.KEY_CLOCK_DATE_PATTERN, "").orEmpty().take(ClockPattern.MAX_LENGTH)
+            s.leftReadouts = p.getInt(Prefs.KEY_LEFT_READOUTS, 0)
             s.clockWeekdayFormat = p.getInt(Prefs.KEY_CLOCK_WEEKDAY_FORMAT, Prefs.DEF_CLOCK_WEEKDAY_FORMAT)
             s.clockWeekdayColorOnDark = p.getInt(Prefs.KEY_COLOR_CLOCK_WEEKDAY_ON_DARK, Prefs.DEF_COLOR_CLOCK)
             s.clockWeekdayColorOnLight = p.getInt(Prefs.KEY_COLOR_CLOCK_WEEKDAY_ON_LIGHT, Prefs.DEF_COLOR_CLOCK)
@@ -1124,6 +1133,9 @@ class ModuleSettings {
             s.clockRowGap = Prefs.clamp(bundle.getInt(Prefs.KEY_CLOCK_ROW_GAP, Prefs.DEF_CLOCK_ROW_GAP), Prefs.MIN_CLOCK_ROW_GAP, Prefs.MAX_CLOCK_ROW_GAP)
             s.clockLunar = bundle.getBoolean(Prefs.KEY_CLOCK_LUNAR, Prefs.DEF_CLOCK_LUNAR)
             s.clockDateFormat = bundle.getInt(Prefs.KEY_CLOCK_DATE_FORMAT, Prefs.DEF_CLOCK_DATE_FORMAT)
+            s.clockTimePattern = bundle.getString(Prefs.KEY_CLOCK_TIME_PATTERN, "").orEmpty().take(ClockPattern.MAX_LENGTH)
+            s.clockDatePattern = bundle.getString(Prefs.KEY_CLOCK_DATE_PATTERN, "").orEmpty().take(ClockPattern.MAX_LENGTH)
+            s.leftReadouts = bundle.getInt(Prefs.KEY_LEFT_READOUTS, 0)
             s.clockWeekdayFormat = bundle.getInt(Prefs.KEY_CLOCK_WEEKDAY_FORMAT, Prefs.DEF_CLOCK_WEEKDAY_FORMAT)
             s.clockWeekdayColorOnDark = bundle.getInt(Prefs.KEY_COLOR_CLOCK_WEEKDAY_ON_DARK, Prefs.DEF_COLOR_CLOCK)
             s.clockWeekdayColorOnLight = bundle.getInt(Prefs.KEY_COLOR_CLOCK_WEEKDAY_ON_LIGHT, Prefs.DEF_COLOR_CLOCK)
@@ -1606,6 +1618,9 @@ class ModuleSettings {
         s.clockRowGap = clockRowGap
         s.clockLunar = clockLunar
         s.clockDateFormat = clockDateFormat
+        s.clockTimePattern = clockTimePattern
+        s.clockDatePattern = clockDatePattern
+        s.leftReadouts = leftReadouts
         s.clockWeekdayFormat = clockWeekdayFormat
         s.clockWeekdayColorOnDark = clockWeekdayColorOnDark
         s.clockWeekdayColorOnLight = clockWeekdayColorOnLight
@@ -1802,6 +1817,9 @@ class ModuleSettings {
             Prefs.KEY_CLOCK_ROW_GAP -> clockRowGap = src.clockRowGap
             Prefs.KEY_CLOCK_LUNAR -> clockLunar = src.clockLunar
             Prefs.KEY_CLOCK_DATE_FORMAT -> clockDateFormat = src.clockDateFormat
+            Prefs.KEY_CLOCK_TIME_PATTERN -> clockTimePattern = src.clockTimePattern
+            Prefs.KEY_CLOCK_DATE_PATTERN -> clockDatePattern = src.clockDatePattern
+            Prefs.KEY_LEFT_READOUTS -> leftReadouts = src.leftReadouts
             Prefs.KEY_CLOCK_WEEKDAY_FORMAT -> clockWeekdayFormat = src.clockWeekdayFormat
             Prefs.KEY_COLOR_CLOCK_WEEKDAY_ON_DARK -> clockWeekdayColorOnDark = src.clockWeekdayColorOnDark
             Prefs.KEY_COLOR_CLOCK_WEEKDAY_ON_LIGHT -> clockWeekdayColorOnLight = src.clockWeekdayColorOnLight
@@ -1966,6 +1984,9 @@ class ModuleSettings {
         putInt(Prefs.KEY_CLOCK_ROW_GAP, clockRowGap)
         putBoolean(Prefs.KEY_CLOCK_LUNAR, clockLunar)
         putInt(Prefs.KEY_CLOCK_DATE_FORMAT, clockDateFormat)
+        putString(Prefs.KEY_CLOCK_TIME_PATTERN, clockTimePattern)
+        putString(Prefs.KEY_CLOCK_DATE_PATTERN, clockDatePattern)
+        putInt(Prefs.KEY_LEFT_READOUTS, leftReadouts)
         putInt(Prefs.KEY_CLOCK_WEEKDAY_FORMAT, clockWeekdayFormat)
         putInt(Prefs.KEY_COLOR_CLOCK_WEEKDAY_ON_DARK, clockWeekdayColorOnDark)
         putInt(Prefs.KEY_COLOR_CLOCK_WEEKDAY_ON_LIGHT, clockWeekdayColorOnLight)
@@ -2119,6 +2140,9 @@ class ModuleSettings {
             perfLineGap == other.perfLineGap && perfRefreshSec == other.perfRefreshSec &&
             // Clock & shade
             clockSeconds == other.clockSeconds && clockDate == other.clockDate && clockWeekday == other.clockWeekday &&
+            clockTimePattern == other.clockTimePattern &&
+            clockDatePattern == other.clockDatePattern &&
+            leftReadouts == other.leftReadouts &&
             clockLunar == other.clockLunar && clockDateFormat == other.clockDateFormat &&
             clockWeekdayFormat == other.clockWeekdayFormat && clockWeather == other.clockWeather &&
             clockWeatherStyle == other.clockWeatherStyle && clockStyle == other.clockStyle &&

@@ -41,18 +41,24 @@ internal fun DrawingOutsideParts(
 ) {
     val a = StatusAppearance.of(settings)
     val order = settings.outOrder
-    val typeInside = a.stackTypeShown() || a.screenshotSignal
     val visible = order.filter { slot ->
         when (slot) {
             Prefs.OUT_SLOT_SIGNAL -> a.signalOutOfRing || a.screenshotSignal
             Prefs.OUT_SLOT_READOUTS -> a.perfPairShown()
-            Prefs.OUT_SLOT_TYPE -> a.typeOutOfRing && !typeInside &&
-                !(a.signalOutOfRing && !a.stackedSignal)
+            Prefs.OUT_SLOT_TYPE -> a.standaloneType()
             else -> false
         }
     }.toIntArray()
 
-    if (visible.isEmpty()) return
+    if (visible.isEmpty()) {
+        Text(
+            text = stringResource(R.string.drawing_outside_empty),
+            style = MiuixTheme.textStyles.footnote1,
+            color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+            modifier = Modifier.padding(bottom = 3.dp),
+        )
+        return
+    }
 
     val onScreen = visible.reversedArray()
     Column(Modifier.fillMaxWidth()) {
@@ -78,7 +84,7 @@ internal fun DrawingOutsideParts(
                         else -> true
                     }
                     if (!previewable) {
-                        Box(Modifier.fillMaxWidth().height(58.dp), contentAlignment = Alignment.Center) {
+                        Box(Modifier.fillMaxWidth().height(48.dp), contentAlignment = Alignment.Center) {
                             Text(
                                 text = stringResource(R.string.drawing_preview_hidden),
                                 style = MiuixTheme.textStyles.footnote2,
@@ -86,9 +92,9 @@ internal fun DrawingOutsideParts(
                             )
                         }
                     } else if (part == SettingsPart.Readouts) {
-                        renderReadoutSample(Modifier.fillMaxWidth().height(58.dp))
+                        renderReadoutSample(Modifier.fillMaxWidth().height(48.dp))
                     } else {
-                        renderSmallPreview(part, Modifier.fillMaxWidth().height(58.dp))
+                        renderSmallPreview(part, Modifier.fillMaxWidth().height(48.dp))
                     }
                     Text(
                         text = stringResource(part.labelRes),
@@ -105,7 +111,7 @@ internal fun DrawingOutsideParts(
             }
         }
         Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(

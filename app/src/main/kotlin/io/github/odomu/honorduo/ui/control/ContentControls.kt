@@ -11,11 +11,16 @@
 
 package io.github.odomu.honorduo.ui.control
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import io.github.odomu.honorduo.R
 import io.github.odomu.honorduo.model.ModuleSettings
+import io.github.odomu.honorduo.model.ClockPattern
 import io.github.odomu.honorduo.model.Prefs
+import io.github.odomu.honorduo.model.ReadoutPlacement
+import io.github.odomu.honorduo.ui.dialog.ClockPatternControl
 import io.github.odomu.honorduo.model.StatusAppearance
 import io.github.odomu.honorduo.ui.component.GlassDropdownPreference
 import io.github.odomu.honorduo.ui.component.GlassMultiDropdownPreference
@@ -63,6 +68,8 @@ private val SHADE_WEATHER_OPTIONS = listOf(
     R.string.weather_style_symbol,
     R.string.weather_style_symbol_text,
 )
+
+private val HomeSwitchMargin = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
 
 internal enum class ContentControl(val owner: SettingsPart) {
     Enabled(SettingsPart.Appearance),
@@ -177,6 +184,7 @@ internal enum class ContentControl(val owner: SettingsPart) {
     HideStatusClock(SettingsPart.Clock),
     ClockLunar(SettingsPart.Clock),
     ClockSeconds(SettingsPart.Clock),
+    ClockTimeFormat(SettingsPart.Clock),
     ClockDate(SettingsPart.Clock),
     ClockDateFormat(SettingsPart.Clock),
     ClockWeekday(SettingsPart.Clock),
@@ -261,6 +269,10 @@ internal fun ContentControlRow(
         ContentControl.BtBatteryMode -> IconZones.Part.BT
         else -> null
     }
+    if (positioned != null && ReadoutPlacement.isReadout(IconZones.encodePart(positioned))) {
+        ReadoutPositionControl(positioned, settings, ringSettings, update)
+        return
+    }
     if (control == ContentControl.Type) {
         TypePositionControl(settings, update, zonesAllowed = a.slotted)
         return
@@ -277,9 +289,10 @@ internal fun ContentControlRow(
 
     when (control) {
         ContentControl.Enabled -> ContentToggle(settings.enabled, R.string.master_module_title,
-            null, emptyList()) { value -> update { it.setEnabled(value) } }
+            null, emptyList(), insideMargin = HomeSwitchMargin) { value -> update { it.setEnabled(value) } }
         ContentControl.MergeIcons -> ContentToggle(settings.mergeIcons, R.string.master_title,
-            R.string.merge_icons_summary, listOf(settings.enabled to R.string.master_module_title)) { value -> update { it.setMergeIcons(value) } }
+            R.string.merge_icons_summary, listOf(settings.enabled to R.string.master_module_title),
+            insideMargin = HomeSwitchMargin) { value -> update { it.setMergeIcons(value) } }
         ContentControl.Style -> {
             val styles = listOf(Prefs.STYLE_RING, Prefs.STYLE_CAPSULE)
             ContentChoice(styles.indexOf(a.style).coerceAtLeast(0), R.string.trio_style_title,
@@ -292,6 +305,7 @@ internal fun ContentControlRow(
             title = R.string.anti_burn_in_title,
             summaryRes = R.string.anti_burn_in_summary,
             dependencies = emptyList(),
+            insideMargin = HomeSwitchMargin,
         ) { value -> update { it.setAntiBurnIn(value) } }
         ContentControl.SignalColumns -> {
             val columns = listOf(4, 5)
@@ -465,7 +479,7 @@ internal fun ContentControlRow(
         ) { value -> update { it.setTypeHideOnWifi(value) } }
         ContentControl.ShowOutType -> if (!a.typeInRing) {
             ContentToggle(
-                checked = settings.mobileTypeMode == Prefs.MOBILE_TYPE_OUT_RING,
+                checked = a.typeOutOfRing,
                 title = R.string.show_out_type_title,
                 summaryRes = R.string.show_out_type_summary,
                 dependencies = listOf(settings.enabled to R.string.master_title),
@@ -624,9 +638,9 @@ internal fun ContentControlRow(
                 dependencies = listOf(settings.shadeWeather to R.string.shade_weather_title),
             ) { value -> update { it.setShadeWeatherClick(value) } }
         } else Unit
-        ContentControl.Power -> ContentToggle(settings.perfPower, R.string.perf_power_title, R.string.perf_reading_common_summary, emptyList()) { value -> update { it.setPerfPower(value) } }
-        ContentControl.RunningPower -> ContentToggle(checked = settings.perfRunning, title = R.string.perf_running_title, summaryRes = R.string.perf_reading_common_summary,
-            dependencies = emptyList()) { value -> update { it.setPerfRunning(value) } }
+        ContentControl.Power, ContentControl.RunningPower, ContentControl.Temperature,
+        ContentControl.Fps, ContentControl.Current, ContentControl.Voltage,
+        ContentControl.PerfSignal, ContentControl.BtBatteryMode -> Unit
         // Absent (not greyed) when the caption has nowhere to sit: type inside the
         // glyph, or the stacked reading off.
         ContentControl.StackLabel ->
@@ -660,15 +674,6 @@ internal fun ContentControlRow(
             summaryRes = R.string.perf_temp_charging_only_summary,
             dependencies = listOf(settings.perfTemp to R.string.perf_temp_title),
         ) { value -> update { it.setPerfTempChargingOnly(value) } }
-        ContentControl.Temperature -> ContentToggle(settings.perfTemp, R.string.perf_temp_title, R.string.perf_reading_common_summary, emptyList()) { value -> update { it.setPerfTemp(value) } }
-        ContentControl.Fps -> ContentToggle(checked = settings.perfFps, title = R.string.perf_fps_title, summaryRes = R.string.perf_reading_common_summary,
-            dependencies = emptyList()) { value -> update { it.setPerfFps(value) } }
-        ContentControl.Current -> ContentToggle(
-            checked = settings.perfCurrent,
-            title = R.string.perf_current_title,
-            summaryRes = R.string.perf_reading_common_summary,
-            dependencies = emptyList(),
-        ) { value -> update { it.setPerfCurrent(value) } }
         ContentControl.CurrentUnit -> ContentChoice(
             settings.currentUnit, R.string.current_unit_title, R.string.current_unit_summary,
             listOf(R.string.current_unit_ma, R.string.current_unit_a),
@@ -680,12 +685,6 @@ internal fun ContentControlRow(
             summaryRes = R.string.current_positive_summary,
             dependencies = listOf(settings.perfCurrent to R.string.perf_current_title),
         ) { value -> update { it.setCurrentPositive(value) } }
-        ContentControl.Voltage -> ContentToggle(
-            checked = settings.perfVoltage,
-            title = R.string.perf_voltage_title,
-            summaryRes = R.string.perf_reading_common_summary,
-            dependencies = emptyList(),
-        ) { value -> update { it.setPerfVoltage(value) } }
         ContentControl.Clock -> Unit
         ContentControl.HideStatusClock -> ContentToggle(
             checked = settings.hideStatusClock,
@@ -699,33 +698,34 @@ internal fun ContentControlRow(
             summaryRes = R.string.clock_lunar_summary,
             dependencies = listOf(!a.hasRingPart(Prefs.PART_CLOCK) to R.string.ring_position_clock),
         ) { value -> update { it.setClockLunar(value) } }
-        ContentControl.ClockSeconds -> ContentToggle(
+        ContentControl.ClockSeconds -> if (settings.clockTimePattern.isEmpty()) ContentToggle(
             checked = settings.clockSeconds,
             title = R.string.clock_seconds_title,
             summaryRes = R.string.clock_seconds_summary,
             dependencies = listOf(!a.hasRingPart(Prefs.PART_CLOCK) to R.string.ring_position_clock),
         ) { value -> update { it.setClockSeconds(value) } }
+        ContentControl.ClockTimeFormat -> ClockPatternControl(
+            title = R.string.clock_time_format_title,
+            value = settings.clockTimePattern,
+            defaultPattern = null,
+            hint = R.string.clock_time_pattern_hint,
+            showDefaultSeconds = settings.clockSeconds,
+        ) { value -> update { it.setClockTimePattern(value) } }
         ContentControl.ClockDate -> ContentToggle(
             checked = settings.clockDate,
             title = R.string.clock_date_title,
             summaryRes = R.string.clock_date_summary,
             dependencies = listOf(!a.hasRingPart(Prefs.PART_CLOCK) to R.string.ring_position_clock),
         ) { value -> update { it.setClockDate(value) } }
-        ContentControl.ClockDateFormat -> if (settings.clockDate) {
-            ContentChoice(
-                selected = settings.clockDateFormat,
+        ContentControl.ClockDateFormat -> {
+            val preset = ClockPattern.datePreset(settings.clockDateFormat)
+            ClockPatternControl(
                 title = R.string.clock_date_format_title,
-                summaryRes = null,
-                options = listOf(
-                    R.string.clock_date_format_slash_md,
-                    R.string.clock_date_format_slash_ymd,
-                    R.string.clock_date_format_zh_md,
-                    R.string.clock_date_format_zh_ymd,
-                ),
-                dependencies = listOf(!a.hasRingPart(Prefs.PART_CLOCK) to R.string.ring_position_clock),
-                onChange = { value -> update { it.setClockDateFormat(value) } },
-            )
-        } else Unit
+                value = settings.clockDatePattern,
+                defaultPattern = preset,
+                hint = R.string.clock_date_pattern_hint,
+            ) { value -> update { it.setClockDatePattern(value) } }
+        }
         ContentControl.ClockWeekday -> ContentToggle(
             checked = settings.clockWeekday,
             title = R.string.clock_weekday_title,
@@ -746,34 +746,6 @@ internal fun ContentControlRow(
                 onChange = { value -> update { it.setClockWeekdayFormat(value) } },
             )
         } else Unit
-        ContentControl.PerfSignal -> ContentToggle(
-            checked = settings.perfSignal,
-            title = R.string.perf_signal_title,
-            summaryRes = R.string.perf_reading_common_summary,
-            dependencies = emptyList(),
-        ) { value -> update { it.setPerfSignal(value) } }
-        ContentControl.BtBatteryMode -> ContentToggle(
-            checked = settings.btBatteryMode > 0,
-            title = R.string.bt_battery_title,
-            summaryRes = R.string.bt_battery_summary,
-            dependencies = emptyList(),
-        ) { on ->
-            update {
-                // Turning it back on keeps the chosen style; a fresh turn-on starts
-                // with the line form.
-                val mode = if (!on) {
-                    Prefs.BT_BATTERY_OFF
-                } else if (settings.btBatteryMode == Prefs.BT_BATTERY_OFF) {
-                    Prefs.BT_BATTERY_ARC
-                } else {
-                    settings.btBatteryMode
-                }
-                it.setBtBatteryMode(mode)
-            }
-        }
-        // The style only decides how the reading is drawn inside the glyph; outside it
-        // is always a digit. Hidden while the indicator is off, so the switch alone
-        // decides whether the reading exists.
         ContentControl.BtBatteryStyle -> if (settings.btBatteryMode > 0) {
             ContentChoice(
                 if (settings.btBatteryMode == Prefs.BT_BATTERY_DIGIT) 1 else 0,
@@ -816,6 +788,7 @@ internal fun ContentControlRow(
             ),
             dependencies = listOf(settings.enabled to R.string.master_title),
             minimumSelected = 1,
+            insideMargin = HomeSwitchMargin,
         ) { next -> update { it.setEffectiveScope(scopeMaskOf(next)) } }
 
     }
@@ -1047,6 +1020,44 @@ private fun middleBlocked(part: IconZones.Part): Set<Int> =
     if (IconZones.isSignalRow(part)) setOf(IconZones.Zone.CENTRE.ordinal + 1) else emptySet()
 
 @Composable
+private fun ReadoutPositionControl(
+    part: IconZones.Part,
+    settings: ModuleSettings,
+    ringSettings: ModuleSettings,
+    update: ((SettingsStore) -> Unit) -> Unit,
+) {
+    val id = IconZones.encodePart(part)
+    val zones = if (StatusAppearance.of(ringSettings).slotted) {
+        listOf(IconZones.Zone.LEFT, IconZones.Zone.TOP, IconZones.Zone.CENTRE, IconZones.Zone.BOTTOM, IconZones.Zone.RIGHT)
+    } else emptyList()
+    val positions = listOf(ReadoutPlacement.OFF, ReadoutPlacement.LEFT, ReadoutPlacement.RIGHT) + zones.map { it.ordinal }
+    val position = when {
+        !ReadoutPlacement.enabled(settings, id) -> ReadoutPlacement.OFF
+        ReadoutPlacement.onLeft(settings.leftReadouts, id) -> ReadoutPlacement.LEFT
+        else -> ringSettings.ringZones.indexOfFirst { it.contains(id) }.takeIf { it in positions } ?: ReadoutPlacement.RIGHT
+    }
+    val title = when (part) {
+        IconZones.Part.POWER -> R.string.perf_power_title
+        IconZones.Part.RUNNING -> R.string.perf_running_title
+        IconZones.Part.TEMP -> R.string.perf_temp_title
+        IconZones.Part.FPS -> R.string.perf_fps_title
+        IconZones.Part.CURRENT -> R.string.perf_current_title
+        IconZones.Part.VOLTAGE -> R.string.perf_voltage_title
+        IconZones.Part.SIGNAL -> R.string.perf_signal_title
+        IconZones.Part.BT -> R.string.bt_battery_title
+        else -> return
+    }
+    ContentChoice(
+        selected = positions.indexOf(position),
+        title = title,
+        summaryRes = null,
+        options = listOf(R.string.readout_position_off, R.string.readout_position_left, R.string.readout_position_right) +
+            zones.map(::zoneLabelRes),
+        dependencies = listOf(settings.enabled to R.string.master_module_title),
+    ) { index -> update { it.setReadoutPosition(part, positions[index]) } }
+}
+
+@Composable
 private fun RingPositionControl(
     part: IconZones.Part,
     settings: ModuleSettings,
@@ -1134,6 +1145,7 @@ private fun ContentToggle(
     title: Int,
     summaryRes: Int?,
     dependencies: List<Pair<Boolean, Int>>,
+    insideMargin: PaddingValues = SettingsItemMargin,
     onChange: (Boolean) -> Unit,
 ) {
     ContentGate(dependencies) {
@@ -1141,7 +1153,7 @@ private fun ContentToggle(
             checked = checked,
             title = stringResource(title),
             summary = summaryRes?.let { stringResource(it) },
-            insideMargin = SettingsItemMargin,
+            insideMargin = insideMargin,
             onCheckedChange = onChange,
         )
     }
@@ -1237,6 +1249,7 @@ private fun ContentMultiChoice(
     options: List<Int>,
     dependencies: List<Pair<Boolean, Int>>,
     minimumSelected: Int = 0,
+    insideMargin: PaddingValues = SettingsItemMargin,
     onChange: (Set<Int>) -> Unit,
 ) {
     ContentGate(dependencies) {
@@ -1258,7 +1271,7 @@ private fun ContentMultiChoice(
                 if (next.size >= minimumSelected) onChange(next)
             },
             summary = summary,
-            insideMargin = SettingsItemMargin,
+            insideMargin = insideMargin,
             enabled = dependencies.all { it.first },
         )
     }

@@ -3,6 +3,7 @@ package io.github.odomu.honorduo.ui.drawing
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -14,7 +15,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import io.github.odomu.honorduo.R
-import io.github.odomu.honorduo.ui.component.SettingsItemMargin
 import io.github.odomu.honorduo.ui.dialog.occupantLabelRes
 import io.github.odomu.honorduo.ui.render.IconZones
 import top.yukonga.miuix.kmp.basic.Icon
@@ -46,7 +46,7 @@ internal fun PriorityPreferenceRow(
                     else -> stringResource(R.string.drawing_priority_fallback, index + 1)
                 },
                 selected = index == 0,
-                insideMargin = SettingsItemMargin,
+                insideMargin = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 onClick = onEdit,
             )
         }

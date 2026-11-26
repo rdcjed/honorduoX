@@ -473,7 +473,7 @@ internal fun geometrySliders(): List<SliderSpec> {
             write = { r, v -> r.setOutTypeSize(v) },
             titleRes = { R.string.out_type_size_title },
             summaryRes = { R.string.out_type_size_summary },
-            enabled = { it.typeOutOfRing },
+            enabled = { it.typeOutsideGlyph() },
             suffix = "dp",
         ),
         SliderSpec(

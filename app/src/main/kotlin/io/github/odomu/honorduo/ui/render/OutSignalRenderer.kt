@@ -644,8 +644,8 @@ internal object OutSignalRenderer {
         val size = aloneCaptionSize(a, dual)
         val second = if (dual) type2 else null
         val widest = max(
-            labelWidth(type, size, a.typeSuffixScale),
-            labelWidth(second, size, a.typeSuffixScale),
+            labelWidth(type, size, a),
+            labelWidth(second, size, a),
         )
         return if (widest <= 0f) bars else widest + outLabelGap(a, dual) + bars
     }
@@ -666,8 +666,8 @@ internal object OutSignalRenderer {
         val size = outCaptionSize(a, dual)
         val second = if (dual) type2 else null
         val widest = max(
-            labelWidth(type, size, a.typeSuffixScale),
-            labelWidth(second, size, a.typeSuffixScale),
+            labelWidth(type, size, a),
+            labelWidth(second, size, a),
         )
         if (widest <= 0f) {
             return 0f
@@ -679,8 +679,8 @@ internal object OutSignalRenderer {
         // view clipped it - which only showed while the activity arrows were off, because
         // their width pushed the reading far enough right to hide the overflow.
         val leftExtent = max(
-            labelLeftExtent(type, size, a.typeSuffixScale),
-            labelLeftExtent(second, size, a.typeSuffixScale),
+            labelLeftExtent(type, size, a),
+            labelLeftExtent(second, size, a),
         )
         val leftOverhang = leftExtent - barW * 0.5f
         val actW = if (a.showMobileActivity) {
@@ -770,7 +770,7 @@ internal object OutSignalRenderer {
         if (size <= 0f) {
             return
         }
-        applyWeight(max(a.typeWeight, LABEL_WEIGHT))
+        applyWeight(a.typeWeight)
         TEXT.textSize = size
         TEXT.color = fg
         TEXT.getTextBounds(text, 0, text.length, TEXT_INK)
@@ -790,31 +790,27 @@ internal object OutSignalRenderer {
      * [labelWidth] is the caption's total width; the placement puts the 'G' - not the
      * caption's centre - over bar 1, so the prefix hangs that much further left.
      */
-    private fun labelLeftExtent(text: String?, size: Float, suffixScale: Int): Float {
+    private fun labelLeftExtent(text: String?, size: Float, a: StatusAppearance): Float {
         if (text.isNullOrEmpty() || size <= 0f) {
             return 0f
         }
         val g = text.indexOf('G')
         val prefix = if (g > 0) text.substring(0, g) else ""
-        val total = labelWidth(text, size, suffixScale)
+        val total = labelWidth(text, size, a)
         val prefixW = if (prefix.isEmpty()) 0f else {
-            applyWeight(LABEL_WEIGHT)
             measureType(prefix, size, 100)
         }
         return prefixW + (total - prefixW) * 0.5f
     }
 
 
-    fun labelWidth(text: String?, size: Float, suffixScale: Int = 100): Float {
+    private fun labelWidth(text: String?, size: Float, a: StatusAppearance): Float {
         if (text.isNullOrEmpty() || size <= 0f) {
             return 0f
         }
-        applyWeight(LABEL_WEIGHT)
-        return measureType(text, size, suffixScale)
+        applyWeight(a.typeWeight)
+        return measureType(text, size, a.typeSuffixScale)
     }
-
-
-    private const val LABEL_WEIGHT = 700
 
 
     /** Floor for the idle arrows: the track alpha alone renders them nearly invisible. */
@@ -899,11 +895,12 @@ internal object OutSignalRenderer {
     /**
      * Shifts the caption so that the letter 'G' is centered directly over Bar 1.
      */
-    private fun typeLabelXOverBar1(type: String?, bar1Center: Float, size: Float): Float {
+    private fun typeLabelXOverBar1(type: String?, bar1Center: Float, size: Float, weight: Int): Float {
         if (type.isNullOrEmpty()) return bar1Center
         val gIdx = type.indexOf('G')
         if (gIdx <= 0) return bar1Center
         val prefix = type.substring(0, gIdx)
+        applyWeight(weight)
         TEXT.textSize = size
         val prefixW = TEXT.measureText(prefix)
         return bar1Center - prefixW * 0.5f
@@ -975,7 +972,7 @@ internal object OutSignalRenderer {
         val bar1Center = barsX + barW * 0.5f
         if (above && !type.isNullOrEmpty()) {
             val capSize = outCaptionSize(a, dotRow) * scale
-            val labelX = typeLabelXOverBar1(type, bar1Center, capSize)
+            val labelX = typeLabelXOverBar1(type, bar1Center, capSize, a.typeWeight)
             drawOutLabel(
                 c, type, labelX,
                 inkTop + 4f * scale, scale, fg, a, dual = dotRow, hang = true,
@@ -1039,6 +1036,8 @@ internal object OutSignalRenderer {
     }
 
     private const val SCREENSHOT_WIDTH_SCALE = 1.2f
+    private const val SCREENSHOT_DEFAULT_LABEL_SIZE = 100f
+    private const val SCREENSHOT_MAX_LABEL_SIZE = 132f
     private val NATIVE_ACTIVITY_PAINT = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     private var nativeActivityColor: Int? = null
 
@@ -1050,12 +1049,22 @@ internal object OutSignalRenderer {
     private fun screenshotBarsWidth(a: StatusAppearance): Float =
         (outColumns(a) - 1) * screenshotPitch(a) + screenshotBarWidth(a)
 
+    private fun screenshotLabelSize(a: StatusAppearance): Float {
+        val defaultSize = Prefs.DEF_OUT_TYPE_SIZE_DP
+        if (a.outTypeSize <= defaultSize) {
+            return SCREENSHOT_DEFAULT_LABEL_SIZE * a.outTypeSize / defaultSize
+        }
+        // Each caption shares a fixed-height signal row, so the upper slider range
+        // grows the text only as far as the two captions can still fit independently.
+        val fraction = (a.outTypeSize - defaultSize).toFloat() / (Prefs.MAX_OUT_TYPE_SIZE_DP - defaultSize)
+        return SCREENSHOT_DEFAULT_LABEL_SIZE + (SCREENSHOT_MAX_LABEL_SIZE - SCREENSHOT_DEFAULT_LABEL_SIZE) * fraction
+    }
+
     private fun screenshotWidth(a: StatusAppearance, type: String?, type2: String?, dual: Boolean): Float {
-        applyWeight(700)
-        TEXT.textSize = 100f
+        val size = screenshotLabelSize(a)
         val label = if (a.hideNetType) 0f else maxOf(
-            measureType(type, 100f, a.typeSuffixScale),
-            if (dual) measureType(type2, 100f, a.typeSuffixScale) else 0f,
+            labelWidth(type, size, a),
+            if (dual) labelWidth(type2, size, a) else 0f,
         )
         return screenshotBarsWidth(a) + if (label > 0f) label + 16f else 0f
     }
@@ -1079,12 +1088,11 @@ internal object OutSignalRenderer {
         val inactive = withAlpha(fg, a.trackAlpha)
         fun row(level: Int, label: String?, y: Float, rowIndex: Int) {
             if (!a.hideNetType && !label.isNullOrEmpty()) {
-                applyWeight(700)
-                TEXT.textSize = 100f * scale
+                val size = screenshotLabelSize(a) * scale
+                val labelWidth = labelWidth(label, size, a)
                 TEXT.getTextBounds(label, 0, label.length, TEXT_INK)
                 val baseline = y + 100f * scale - TEXT_INK.bottom
-                val labelWidth = measureType(label, 100f * scale, a.typeSuffixScale)
-                drawType(c, label, barsX - 16f * scale - labelWidth / 2f, baseline, 100f * scale, fg, a)
+                drawType(c, label, barsX - 16f * scale - labelWidth / 2f, baseline, size, fg, a)
             }
             if (rowIndex == activityRow) {
                 val barWidth = screenshotBarWidth(a) * scale
@@ -1193,7 +1201,7 @@ internal object OutSignalRenderer {
         val bar1Center = barsX + barWpx * 0.5f
         if (above && !type.isNullOrEmpty()) {
             val capSize = outCaptionSize(a, dual) * scale
-            val labelX = typeLabelXOverBar1(type, bar1Center, capSize)
+            val labelX = typeLabelXOverBar1(type, bar1Center, capSize, a.typeWeight)
             drawOutLabel(
                 c, type, labelX,
                 top + 10f * scale, scale, fg, a, dual = true, hang = true,
@@ -1234,7 +1242,7 @@ internal object OutSignalRenderer {
             // Network type of Row 2: letter 'G' aligned directly with Bar 1 of Row 2
             if (above && !type2.isNullOrEmpty()) {
                 val capSize = outCaptionSize(a, true) * scale
-                val labelX2 = typeLabelXOverBar1(type2, bar1Center, capSize)
+                val labelX2 = typeLabelXOverBar1(type2, bar1Center, capSize, a.typeWeight)
                 drawOutLabel(
                     c, type2, labelX2,
                     secondTop + 10f * scale, scale, fg, a, dual = true, hang = true,
@@ -1272,8 +1280,7 @@ internal object OutSignalRenderer {
         fg: Int, a: StatusAppearance, dual: Boolean = true, hang: Boolean = false,
     ) {
         val size = outCaptionSize(a, dual) * scale
-        // Small bold label: enough weight to stay legible at 6sp.
-        applyWeight(max(a.typeWeight, LABEL_WEIGHT))
+        applyWeight(a.typeWeight)
         TEXT.textSize = size
         TEXT.color = fg
         // `hang` puts the caption's DRAWN top on `edge`; otherwise its baseline sits a gap

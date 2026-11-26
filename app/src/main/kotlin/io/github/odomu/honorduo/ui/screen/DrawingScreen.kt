@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -45,9 +46,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -56,6 +59,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -81,6 +85,7 @@ import io.github.odomu.honorduo.ui.render.IconZones
 import io.github.odomu.honorduo.ui.view.StatusPreviewView
 import top.yukonga.miuix.kmp.basic.Button
 import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -118,7 +123,8 @@ private const val REMOVE = 0
  */
 
 /** Row rhythm inside the editor card, matching the rest of the settings screen. */
-private val DrawingItemMargin = PaddingValues(horizontal = 18.dp, vertical = 10.dp)
+private val DrawingItemMargin = PaddingValues(horizontal = 18.dp, vertical = 6.dp)
+private val DrawingStylePreviewHeight = 48.dp
 
 /**
  * The battery and signal states the preview can be put into.
@@ -245,6 +251,7 @@ private fun DrawingEditorCard(
     var pressed by remember { mutableStateOf<IconZones.Zone?>(null) }
     var scene by rememberSaveable { mutableStateOf(PreviewScene.Normal) }
     var previewTheme by rememberSaveable { mutableIntStateOf(0) }
+    var showOutside by rememberSaveable { mutableStateOf(false) }
     var lastSelection by remember { mutableStateOf<ZoneSelection?>(null) }
 
     val appearance = StatusAppearance.of(settings)
@@ -286,7 +293,7 @@ private fun DrawingEditorCard(
         }
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         DrawingSection(R.string.section_feature_switches, PaddingValues(0.dp)) {
             ContentControlRow(ContentControl.Enabled, settings, update)
             ContentControlRow(ContentControl.MergeIcons, settings, update)
@@ -300,73 +307,95 @@ private fun DrawingEditorCard(
                 scene = scene,
                 dark = dark,
                 snapshotForStyle = snapshotForStyle,
+                showOutside = showOutside,
+                onSelectOutside = { showOutside = true },
                 onSelect = { style ->
+                    showOutside = false
                     lastSelection = null
-                    update { it.setTrioStyle(style) }
+                    if (style != settings.trioStyle) update { it.setTrioStyle(style) }
                 },
             )
-            Text(
-                text = stringResource(R.string.drawing_state_title),
-                style = MiuixTheme.textStyles.subtitle,
-            )
-            SceneSelector(
-                selected = scene,
-                onSelect = { scene = it },
-                modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
-            )
-            LazyRow(
-                modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                items(listOf(R.string.drawing_theme_system, R.string.drawing_theme_light,
-                    R.string.drawing_theme_dark).withIndex().toList(), key = { it.index }) { entry ->
-                    SceneChip(stringResource(entry.value), previewTheme == entry.index) {
-                        previewTheme = entry.index
+            if (showOutside) {
+                DrawingOutsideParts(
+                    settings = settings,
+                    scene = scene,
+                    dark = dark,
+                    onEdit = { editing = it },
+                    onReorder = { order -> update { it.setOutOrder(order) } },
+                    renderReadoutSample = { modifier -> DrawingReadoutSample(settings, dark, modifier) },
+                    renderSmallPreview = { part, modifier ->
+                        val a = StatusAppearance.of(settings)
+                        DrawingSmallPreview(
+                            settings, scene, dark, modifier,
+                            outType = part == SettingsPart.Type && a.typeOutsideGlyph(),
+                            outSignal = part == SettingsPart.Mobile && a.stackedOut(),
+                        )
+                    },
+                )
+            } else {
+                Text(
+                    text = stringResource(R.string.drawing_state_title),
+                    style = MiuixTheme.textStyles.subtitle,
+                )
+                SceneSelector(
+                    selected = scene,
+                    onSelect = { scene = it },
+                    modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                )
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    items(listOf(R.string.drawing_theme_system, R.string.drawing_theme_light,
+                        R.string.drawing_theme_dark).withIndex().toList(), key = { it.index }) { entry ->
+                        SceneChip(stringResource(entry.value), previewTheme == entry.index) {
+                            previewTheme = entry.index
+                        }
                     }
                 }
-            }
 
-            DrawingGlyph(
-                settings = settings,
-                scene = scene,
-                dark = dark,
-                pressed = pressed,
-                onPressChange = { pressed = it },
-                // A press on the glyph opens that zone's picker.
-                onEditZone = { zone ->
-                    val part = IconZones.occupant(
-                        zone, appearance, scene.level, scene.charging,
-                        scene.wifiLevel, PREVIEW_TYPE, sims,
+                DrawingGlyph(
+                    settings = settings,
+                    scene = scene,
+                    dark = dark,
+                    pressed = pressed,
+                    onPressChange = { pressed = it },
+                    // A press on the glyph opens that zone's picker.
+                    onEditZone = { zone ->
+                        val part = IconZones.occupant(
+                            zone, appearance, scene.level, scene.charging,
+                            scene.wifiLevel, PREVIEW_TYPE, sims,
+                        )
+                        if (part == null) {
+                            picking = zone
+                        } else {
+                            editing = SettingsPart.of(part)
+                        }
+                    },
+                    onEditBattery = { editing = SettingsPart.Battery },
+                    onEditAppearance = { editing = SettingsPart.Appearance },
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                )
+
+                if (!appearance.enabled) {
+                    Text(
+                        text = stringResource(R.string.drawing_master_off),
+                        style = MiuixTheme.textStyles.footnote2,
+                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                        modifier = Modifier.padding(top = 6.dp),
                     )
-                    if (part == null) {
-                        picking = zone
-                    } else {
-                        editing = SettingsPart.of(part)
-                    }
-                },
-                onEditBattery = { editing = SettingsPart.Battery },
-                onEditAppearance = { editing = SettingsPart.Appearance },
-                modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
-            )
-
-            if (!appearance.enabled) {
-                Text(
-                    text = stringResource(R.string.drawing_master_off),
-                    style = MiuixTheme.textStyles.footnote2,
-                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                    modifier = Modifier.padding(top = 10.dp),
-                )
-            } else if (!appearance.mergeIcons) {
-                Text(
-                    text = stringResource(R.string.drawing_merge_off),
-                    style = MiuixTheme.textStyles.footnote2,
-                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                    modifier = Modifier.padding(top = 10.dp),
-                )
+                } else if (!appearance.mergeIcons) {
+                    Text(
+                        text = stringResource(R.string.drawing_merge_off),
+                        style = MiuixTheme.textStyles.footnote2,
+                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                }
             }
         }
 
-        DrawingSection(R.string.drawing_order_title) {
+        if (!showOutside) DrawingSection(R.string.drawing_order_title) {
             // The strip lists the zones this arrangement actually has.
             val zones = zonesFor(appearance)
             Row(
@@ -405,7 +434,7 @@ private fun DrawingEditorCard(
                     }
                 }
             }
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(6.dp))
 
             val chain = appearance.ringZones[openZone.ordinal]
             // Shown whenever the signal is out of ring, not only when a signal row happens to be in this zone's list.
@@ -422,7 +451,7 @@ private fun DrawingEditorCard(
                         text = stringResource(R.string.drawing_priority_empty_summary),
                         style = MiuixTheme.textStyles.footnote2,
                         color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
+                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 8.dp),
                     )
                 }
                 chain.forEachIndexed { index, id ->
@@ -447,30 +476,12 @@ private fun DrawingEditorCard(
 
             Button(
                 onClick = { picking = openZone },
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 5.dp),
             ) {
                 Text(stringResource(R.string.drawing_priority_add))
             }
         }
 
-        DrawingSection(R.string.drawing_outside_title) {
-            DrawingOutsideParts(
-                settings = settings,
-                scene = scene,
-                dark = dark,
-                onEdit = { editing = it },
-                onReorder = { order -> update { it.setOutOrder(order) } },
-                renderReadoutSample = { modifier -> DrawingReadoutSample(settings, dark, modifier) },
-                renderSmallPreview = { part, modifier ->
-                    val a = StatusAppearance.of(settings)
-                    DrawingSmallPreview(
-                        settings, scene, dark, modifier,
-                        outType = part == SettingsPart.Type && a.typeOutOfRing,
-                        outSignal = part == SettingsPart.Mobile && a.stackedOut(),
-                    )
-                },
-            )
-        }
     }
 
     val pickZone = picking
@@ -538,7 +549,7 @@ private fun DrawingEditorCard(
     }
 }
 
-/** A labelled card using the same section rhythm as the settings page. */
+/** A labelled card in the home layout. */
 @Composable
 private fun DrawingSection(
     titleRes: Int,
@@ -548,8 +559,7 @@ private fun DrawingSection(
     Column {
         SmallTitle(
             text = stringResource(titleRes),
-            modifier = Modifier.padding(top = 4.dp),
-            insideMargin = PaddingValues(horizontal = 18.dp, vertical = 8.dp),
+            insideMargin = PaddingValues(start = 18.dp, top = 4.dp, end = 18.dp, bottom = 5.dp),
         )
         Card {
             Column(modifier = Modifier.fillMaxWidth().padding(contentPadding), content = content)
@@ -565,35 +575,85 @@ private fun drawingPartLabel(part: SettingsPart): Int = when (part) {
 
 @Composable
 private fun DrawingStyleSelector(
-    settings: ModuleSettings, scene: PreviewScene, dark: Boolean,
-    snapshotForStyle: (Int) -> ModuleSettings, onSelect: (Int) -> Unit,
+    settings: ModuleSettings,
+    scene: PreviewScene,
+    dark: Boolean,
+    snapshotForStyle: (Int) -> ModuleSettings,
+    showOutside: Boolean,
+    onSelectOutside: () -> Unit,
+    onSelect: (Int) -> Unit,
 ) {
-    val styles = listOf(Prefs.STYLE_RING, Prefs.STYLE_CAPSULE)
-    val labels = listOf(R.string.trio_style_ring, R.string.trio_style_capsule)
-    Row(Modifier.fillMaxWidth().padding(bottom = 18.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        styles.forEachIndexed { index, style ->
-            val chosen = settings.trioStyle == style
+    val styles = listOf(Prefs.STYLE_RING to R.string.trio_style_ring, Prefs.STYLE_CAPSULE to R.string.trio_style_capsule)
+    Row(
+        Modifier.fillMaxWidth().padding(bottom = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        for ((style, label) in styles) {
             val sample = remember(style, settings) {
-                // The live snapshot IS this style's snapshot while it is the chosen one;
-                // reading it back out of the preferences costs a full store read on every
-                // settings write for no change.
-                if (style == settings.trioStyle) {
-                    settings
-                } else {
-                    settings.withComponentsFrom(snapshotForStyle(style), style)
-                }
+                if (style == settings.trioStyle) settings
+                else settings.withComponentsFrom(snapshotForStyle(style), style)
             }
-            Column(Modifier.weight(1f).clip(RoundedCornerShape(12.dp))
-                .background(if (chosen) MiuixTheme.colorScheme.primaryContainer else MiuixTheme.colorScheme.surfaceContainerHigh)
-                .border(if (chosen) 2.dp else 0.dp, if (chosen) MiuixTheme.colorScheme.primary else Color.Transparent, RoundedCornerShape(12.dp))
-                .semantics { selected = chosen }
-                .clickable(enabled = settings.enabled, role = Role.RadioButton) { onSelect(style) }
-                .padding(6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                DrawingSmallPreview(sample, scene, dark, Modifier.fillMaxWidth().height(64.dp))
-                Text(stringResource(labels[index]), style = MiuixTheme.textStyles.footnote1,
-                    color = if (chosen) MiuixTheme.colorScheme.onPrimaryContainer else MiuixTheme.colorScheme.onSurface)
+            DrawingStyleTile(
+                label = label,
+                selected = !showOutside && settings.trioStyle == style,
+                enabled = settings.enabled,
+                modifier = Modifier.weight(1f),
+                onClick = { onSelect(style) },
+            ) {
+                DrawingSmallPreview(sample, scene, dark, Modifier.fillMaxWidth().height(DrawingStylePreviewHeight))
             }
         }
+        DrawingStyleTile(
+            label = R.string.drawing_outside_title,
+            selected = showOutside,
+            enabled = true,
+            modifier = Modifier.weight(1f),
+            onClick = onSelectOutside,
+        ) {
+            Box(
+                Modifier.fillMaxWidth().height(DrawingStylePreviewHeight).clip(RoundedCornerShape(10.dp))
+                    .background(MiuixTheme.colorScheme.surface),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = ImageVector.vectorResource(R.drawable.ic_card_stacked_signal),
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp),
+                    tint = MiuixTheme.colorScheme.onSurface,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DrawingStyleTile(
+    label: Int,
+    selected: Boolean,
+    enabled: Boolean,
+    modifier: Modifier,
+    onClick: () -> Unit,
+    preview: @Composable () -> Unit,
+) {
+    val colors = MiuixTheme.colorScheme
+    val shape = RoundedCornerShape(12.dp)
+    Column(
+        modifier.clip(shape)
+            .background(if (selected) colors.primaryContainer else colors.surfaceContainerHigh)
+            .border(if (selected) 2.dp else 0.dp, if (selected) colors.primary else Color.Transparent, shape)
+            .semantics { this.selected = selected }
+            .clickable(enabled = enabled, role = Role.RadioButton, onClick = onClick)
+            .padding(6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        preview()
+        Text(
+            stringResource(label),
+            style = MiuixTheme.textStyles.footnote1,
+            color = if (selected) colors.onPrimaryContainer else colors.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -648,12 +708,13 @@ internal fun DrawingSettingsPreview(
                 Modifier.fillMaxWidth().height(92.dp).clip(shape))
             return
         }
+        val previewStack = a.stackedOut() &&
+            (part == SettingsPart.Mobile || (part == SettingsPart.Type && a.labelInReading()))
         DrawingSmallPreview(
             settings, sample, dark,
             Modifier.fillMaxWidth().height(92.dp).clip(shape),
-            outType = part == SettingsPart.Type && a.typeOutOfRing,
-            // The cell follows what the signal actually is this frame: the stacked reading only exists out of ring with its switch on.
-            outSignal = part == SettingsPart.Mobile && a.stackedOut(),
+            outType = part == SettingsPart.Type && a.typeOutsideGlyph() && !previewStack,
+            outSignal = previewStack,
         )
     }
 }
@@ -669,12 +730,6 @@ private fun releasedPart(part: SettingsPart, settings: ModuleSettings): Int {
     val id = when (piece) {
         IconZones.Part.WIFI -> Prefs.PART_WIFI
         IconZones.Part.CLOCK -> Prefs.PART_CLOCK
-        // The type has no placement to return from: outside IS its released position,
-        // and that is exactly when its own sample should be shown on its own.
-        IconZones.Part.TYPE -> {
-            val a = StatusAppearance.of(settings)
-            return if (a.typeOutOfRing) Prefs.PART_TYPE else 0
-        }
         else -> return 0
     }
     return if (StatusAppearance.of(settings).hasRingPart(id)) 0 else id
@@ -946,7 +1001,7 @@ private fun DrawingGlyph(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(200.dp)
+            .height(88.dp)
             .clip(RoundedCornerShape(16.dp))
             .pointerInput(settings, scene) {
                 detectTapGestures(
@@ -973,7 +1028,7 @@ private fun DrawingGlyph(
         contentAlignment = Alignment.Center,
     ) {
         AndroidView(
-            // Fills the square Box above; the aspect ratio belongs to the Box so the
+            // Fills the preview box above so the
             // gesture detector covers exactly the area the glyph is drawn in.
             modifier = Modifier.fillMaxSize(),
             factory = { context ->

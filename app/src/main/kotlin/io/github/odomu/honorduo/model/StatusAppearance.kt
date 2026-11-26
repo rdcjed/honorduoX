@@ -156,7 +156,7 @@ class StatusAppearance(c: ModuleSettings) {
      * the mode said "outside" was drawn outside anyway. Placement is what the renderer
      * acts on, so placement is what decides.
      */
-    @JvmField val typeInRing: Boolean = showMobileIndicator && c.ringZones.any { it.contains(Prefs.PART_TYPE) }
+    @JvmField val typeInRing: Boolean = glyph && showMobileIndicator && c.ringZones.any { it.contains(Prefs.PART_TYPE) }
 
     /**
      * The network type is drawn as a status-bar view outside the glyph.
@@ -165,7 +165,7 @@ class StatusAppearance(c: ModuleSettings) {
      * ring, and the type would otherwise vanish instead of moving to the place the layout
      * has for it.
      */
-    @JvmField val typeOutOfRing: Boolean = enabled && showMobileIndicator && !typeInRing && c.mobileTypeMode == Prefs.MOBILE_TYPE_OUT_RING
+    @JvmField val typeOutOfRing: Boolean = enabled && showMobileIndicator && !typeInRing && typeMode != Prefs.MOBILE_TYPE_OFF
 
     /** The charging power is drawn in the out-of-ring strip; see [perfAnywhere]. */
     @JvmField val perfPower: Boolean = enabled && c.perfPower
@@ -214,6 +214,13 @@ class StatusAppearance(c: ModuleSettings) {
     @JvmField val fiveGaStyle: Int = if (enabled) c.fiveGaStyle else Prefs.DEF_FIVE_GA_STYLE
     @JvmField val capsuleThreeCentre: Boolean = enabled && c.capsuleThreeCentre
     @JvmField val clockSeconds: Boolean = enabled && c.clockSeconds
+    val clockTimePattern: String = c.clockTimePattern
+    val clockDatePattern: String = c.clockDatePattern
+    val clockTicksEverySecond: Boolean =
+        (if (clockTimePattern.isEmpty()) clockSeconds else ClockPattern.usesSeconds(clockTimePattern)) ||
+            (c.clockDate && ClockPattern.usesSeconds(clockDatePattern))
+    val leftReadouts: Int = c.leftReadouts
+    fun readoutOnLeft(part: Int): Boolean = ReadoutPlacement.onLeft(leftReadouts, part)
 
     /** The date is drawn on its own line above the time. */
     @JvmField val clockDate: Boolean = enabled && c.clockDate
@@ -412,11 +419,11 @@ class StatusAppearance(c: ModuleSettings) {
      * There is no second, switch-derived layout: every piece the ring draws is
      * whatever these lists resolve to.
      */
-    @JvmField val ringZones: Array<IntArray> = if (showBatteryIndicator && showWifiIndicator && showMobileIndicator) {
+    @JvmField val ringZones: Array<IntArray> = if (showBatteryIndicator && showWifiIndicator && showMobileIndicator && leftReadouts == 0) {
         ModuleSettings.copyZones(c.ringZones)
     } else Array(Prefs.ZONE_COUNT) { zone ->
         c.ringZones[zone].filter { part ->
-            when (part) {
+            !readoutOnLeft(part) && when (part) {
                 Prefs.PART_VALUE, Prefs.PART_BOLT -> showBatteryIndicator
                 Prefs.PART_WIFI -> showWifiIndicator
                 Prefs.PART_MOBILE, Prefs.PART_SIM_1, Prefs.PART_SIM_2, Prefs.PART_TYPE -> showMobileIndicator
@@ -523,6 +530,10 @@ class StatusAppearance(c: ModuleSettings) {
      */
     fun labelInReading(): Boolean = screenshotSignal || (stackedOut() && typeOutOfRing)
 
+    fun standaloneType(): Boolean = typeOutOfRing && !labelInReading()
+
+    fun typeOutsideGlyph(): Boolean = typeOutOfRing || (screenshotSignal && showMobileIndicator && !hideNetType)
+
     /**
      * Whether the system's own mobile-signal group has to be hidden, which is exactly
      * while this module draws that signal itself.
@@ -535,7 +546,7 @@ class StatusAppearance(c: ModuleSettings) {
         hasRingPart(Prefs.PART_MOBILE) || hasRingPart(Prefs.PART_SIM_1) || hasRingPart(Prefs.PART_SIM_2)
 
     /** Whether the network type is drawn at all, in either position. */
-    fun typeAnywhere(): Boolean = typeInRing || typeOutOfRing
+    fun typeAnywhere(): Boolean = typeInRing || typeOutsideGlyph()
 
     /** The in-ring bolt's size multiplier, 1.0 for the reference size. */
     fun boltScaleFactor(): Float =
@@ -576,7 +587,7 @@ class StatusAppearance(c: ModuleSettings) {
      * every caller that mounts or measures that view has to ask - never [perfPower] or
      * [perfTemp] alone.
      */
-    fun perfAnywhere(): Boolean = perfPower || perfTemp || perfCurrent || perfVoltage || perfSignal || perfBt ||
+    fun perfAnywhere(): Boolean = perfPower || perfRunning || perfTemp || perfCurrent || perfVoltage || perfSignal || perfBt ||
         (!glyph && (hasRingPart(Prefs.PART_POWER) || hasRingPart(Prefs.PART_TEMP) ||
             hasRingPart(Prefs.PART_RUNNING) || hasRingPart(Prefs.PART_CURRENT) ||
             hasRingPart(Prefs.PART_VOLTAGE) || hasRingPart(Prefs.PART_SIGNAL) ||
@@ -667,7 +678,7 @@ class StatusAppearance(c: ModuleSettings) {
      * Seconds and the date line are both written by the module; with neither on there
      * is nothing to add and the native clock is left alone.
      */
-    fun drawsBarClock(): Boolean = enabled && (clockSeconds || clockDate || clockWeekday ||
+    fun drawsBarClock(): Boolean = enabled && (clockSeconds || clockTimePattern.isNotEmpty() || clockDate || clockWeekday ||
         clockLunar || clockTopOffsetX != Prefs.DEF_CLOCK_TOP_OFFSET_X ||
         clockBottomOffsetX != Prefs.DEF_CLOCK_BOTTOM_OFFSET_X ||
         clockLunarGap != Prefs.DEF_CLOCK_LUNAR_GAP ||

@@ -77,10 +77,10 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-enum class SettingsTab(val labelRes: Int, val route: Route) {
-    About(R.string.tab_home, Route.About),
-    Layout(R.string.tab_layout, Route.Layout),
-    Settings(R.string.tab_settings, Route.Settings),
+enum class SettingsTab(val labelRes: Int, val iconRes: Int, val route: Route) {
+    Layout(R.string.tab_home, R.drawable.ic_lucide_home, Route.Layout),
+    Settings(R.string.tab_settings, R.drawable.ic_lucide_sliders_horizontal, Route.Settings),
+    About(R.string.about_title, R.drawable.ic_lucide_info, Route.About),
 }
 
 @Serializable
@@ -159,11 +159,7 @@ fun DockedNavigationBar(
 }
 
 @Composable
-fun iconFor(tab: SettingsTab): ImageVector = when (tab) {
-    SettingsTab.About -> ImageVector.vectorResource(R.drawable.ic_lucide_home)
-    SettingsTab.Layout -> ImageVector.vectorResource(R.drawable.ic_lucide_circle_dot)
-    SettingsTab.Settings -> ImageVector.vectorResource(R.drawable.ic_lucide_sliders_horizontal)
-}
+fun iconFor(tab: SettingsTab): ImageVector = ImageVector.vectorResource(tab.iconRes)
 
 @Composable
 fun FloatingNavigationBar(

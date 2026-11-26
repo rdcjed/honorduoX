@@ -221,6 +221,9 @@ object Prefs {
     const val MAX_NETWORK_SPEED_SCALE = 100
 
     const val KEY_WIFI_SCALE = "wifi_scale"
+    const val KEY_CLOCK_TIME_PATTERN = "clock_time_pattern"
+    const val KEY_CLOCK_DATE_PATTERN = "clock_date_pattern"
+    const val KEY_LEFT_READOUTS = "left_readouts"
     const val KEY_SHOW_BATTERY_INDICATOR = "show_battery_indicator"
     const val KEY_SHOW_WIFI_INDICATOR = "show_wifi_indicator"
     const val KEY_SHOW_MOBILE_INDICATOR = "show_mobile_indicator"
@@ -1197,7 +1200,6 @@ object Prefs {
     const val DEF_LOG_LEVEL = LOG_LEVEL_OFF
 
     const val KEY_IGNORE_UPDATE_VERSION = "ignore_update_version"
-    const val KEY_APP_FIRST_LAUNCH = "app_first_launch"
     const val KEY_APP_LANGUAGE = "app_language"
     const val APP_LANG_SYSTEM = 0
     const val APP_LANG_ZH = 1

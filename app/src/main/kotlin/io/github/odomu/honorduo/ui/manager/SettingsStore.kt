@@ -20,6 +20,7 @@ import io.github.libxposed.service.XposedService
 import io.github.odomu.honorduo.HonorDuoApp
 import io.github.odomu.honorduo.model.ModuleSettings
 import io.github.odomu.honorduo.model.Prefs
+import io.github.odomu.honorduo.model.ReadoutPlacement
 import io.github.odomu.honorduo.ui.render.IconZones
 
 /**
@@ -139,7 +140,7 @@ class SettingsStore(val context: Context) {
     }
 
     /** Publish one layout edit as a single local/remote transaction and one broadcast. */
-    fun applyRingAssignment(next: ModuleSettings) {
+    fun applyRingAssignment(next: ModuleSettings, removeOtherStyleReadout: Int? = null) {
         // The arrangement being written is the snapshot's own, not the stored one: the caller
         // built `next` for a specific style, and a layout written under the wrong key would
         // show up in the other arrangement on the next style switch.
@@ -169,6 +170,16 @@ class SettingsStore(val context: Context) {
             e.putBoolean(Prefs.KEY_PERF_SIGNAL, next.perfSignal)
             e.putInt(Prefs.KEY_BT_BATTERY_MODE, next.btBatteryMode)
             e.putString(Prefs.KEY_AUTO_ENABLED_PARTS, next.autoEnabledParts)
+            e.putInt(Prefs.KEY_LEFT_READOUTS, next.leftReadouts)
+            e.putString(Prefs.KEY_PERF_ORDER, Prefs.encodePerfOrder(next.perfOrder))
+            if (removeOtherStyleReadout != null) {
+                val otherStyle = if (style == Prefs.STYLE_RING) Prefs.STYLE_CAPSULE else Prefs.STYLE_RING
+                val key = Prefs.styledKey(Prefs.KEY_RING_LAYOUT, otherStyle)
+                val zones = Prefs.decodeLayout(preferences().getString(key, Prefs.EMPTY_LAYOUT))
+                e.putString(key, Prefs.encodeLayout(Array(zones.size) { zone ->
+                    zones[zone].filter { it != removeOtherStyleReadout }.toIntArray()
+                }))
+            }
         }
         preferences().edit {
             write(this)
@@ -239,6 +250,28 @@ class SettingsStore(val context: Context) {
             IconZones.restoreAutoEnabled(next)
             applyRingAssignment(next)
         }
+    }
+
+    fun setReadoutPosition(part: IconZones.Part, position: Int) {
+        val current = read()
+        val id = IconZones.encodePart(part)
+        if (!ReadoutPlacement.isReadout(id) || position !in ReadoutPlacement.OFF until Prefs.ZONE_COUNT) return
+        val next = if (position >= 0) {
+            IconZones.withPiece(current, position, part)
+        } else {
+            current.copy().also { updated ->
+                updated.ringZones = Array(Prefs.ZONE_COUNT) { zone ->
+                    current.ringZones[zone].filter { it != id }.toIntArray()
+                }
+                IconZones.restoreAutoEnabled(updated)
+                ReadoutPlacement.setEnabled(updated, id, position != ReadoutPlacement.OFF)
+                updated.leftReadouts = ReadoutPlacement.setLeft(updated.leftReadouts, id, position == ReadoutPlacement.LEFT)
+            }
+        }
+        if (!ReadoutPlacement.enabled(current, id) && ReadoutPlacement.enabled(next, id)) {
+            next.perfOrder = touchPerfOrder(current.perfOrder, current, ReadoutPlacement.orderId(id))
+        }
+        applyRingAssignment(next, removeOtherStyleReadout = id.takeIf { position < 0 })
     }
 
     fun setRingPartPosition(part: IconZones.Part, position: Int) {
@@ -380,6 +413,16 @@ class SettingsStore(val context: Context) {
     fun setClockRowGap(value: Int) = writeInt(Prefs.KEY_CLOCK_ROW_GAP, value)
     fun setClockLunar(value: Boolean) = writeBoolean(Prefs.KEY_CLOCK_LUNAR, value)
     fun setClockDateFormat(value: Int) = writeInt(Prefs.KEY_CLOCK_DATE_FORMAT, value)
+    fun setClockTimePattern(value: String) = writeString(Prefs.KEY_CLOCK_TIME_PATTERN, value)
+    fun setClockDatePattern(value: String) {
+        val write: (SharedPreferences.Editor) -> Unit = {
+            it.putString(Prefs.KEY_CLOCK_DATE_PATTERN, value)
+            if (value.isNotBlank()) it.putBoolean(Prefs.KEY_CLOCK_DATE, true)
+        }
+        preferences().edit { write(this) }
+        push(write)
+        notifyModule()
+    }
     fun setClockWeekdayFormat(value: Int) = writeInt(Prefs.KEY_CLOCK_WEEKDAY_FORMAT, value)
     fun setColorClockWeekdayOnDark(value: Int) = writeInt(Prefs.KEY_COLOR_CLOCK_WEEKDAY_ON_DARK, value)
     fun setColorClockWeekdayOnLight(value: Int) = writeInt(Prefs.KEY_COLOR_CLOCK_WEEKDAY_ON_LIGHT, value)
@@ -695,8 +738,6 @@ class SettingsStore(val context: Context) {
     fun setIgnoreUpdateVersion(version: String) = writeString(Prefs.KEY_IGNORE_UPDATE_VERSION, version)
     fun getIgnoreUpdateVersion(): String = preferences().getString(Prefs.KEY_IGNORE_UPDATE_VERSION, "") ?: ""
 
-    fun isFirstLaunch(): Boolean = preferences().getBoolean(Prefs.KEY_APP_FIRST_LAUNCH, true)
-    fun markFirstLaunchDone() = writeBoolean(Prefs.KEY_APP_FIRST_LAUNCH, false)
 
     fun getAppLanguage(): Int = preferences().getInt(Prefs.KEY_APP_LANGUAGE, Prefs.DEF_APP_LANGUAGE)
     fun setAppLanguage(value: Int) = writeInt(Prefs.KEY_APP_LANGUAGE, value)
@@ -746,6 +787,9 @@ class SettingsStore(val context: Context) {
             prefs.putInt(Prefs.KEY_CLOCK_ROW_GAP, snapshot.clockRowGap)
             prefs.putBoolean(Prefs.KEY_CLOCK_LUNAR, snapshot.clockLunar)
             prefs.putInt(Prefs.KEY_CLOCK_DATE_FORMAT, snapshot.clockDateFormat)
+            prefs.putString(Prefs.KEY_CLOCK_TIME_PATTERN, snapshot.clockTimePattern)
+            prefs.putString(Prefs.KEY_CLOCK_DATE_PATTERN, snapshot.clockDatePattern)
+            prefs.putInt(Prefs.KEY_LEFT_READOUTS, snapshot.leftReadouts)
             prefs.putInt(Prefs.KEY_CLOCK_WEEKDAY_FORMAT, snapshot.clockWeekdayFormat)
             prefs.putInt(Prefs.KEY_COLOR_CLOCK_WEEKDAY_ON_DARK, snapshot.clockWeekdayColorOnDark)
             prefs.putInt(Prefs.KEY_COLOR_CLOCK_WEEKDAY_ON_LIGHT, snapshot.clockWeekdayColorOnLight)

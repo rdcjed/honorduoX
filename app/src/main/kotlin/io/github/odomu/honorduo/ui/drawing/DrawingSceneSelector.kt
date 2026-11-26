@@ -93,13 +93,13 @@ internal fun SceneChip(
 @Composable
 internal fun SignalOutOfRingNotice() {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
     ) {
         Text(
             text = stringResource(R.string.drawing_signal_out_of_ring_notice),
             style = MiuixTheme.textStyles.footnote2,
             color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
         )
     }
 }

@@ -44,6 +44,8 @@ internal object StatusBarIconManager {
         private set
     @Volatile var mobileSignalId = 0
         private set
+    private var nativeTypeId = 0
+    private var nativeSignalTypeId = 0
 
     /**
      * Slot names of the status icons the user can drop outright.
@@ -151,6 +153,8 @@ internal object StatusBarIconManager {
         clockId = id(res, "clock")
         mobileGroupId = id(res, "mobile_combo")
         mobileSignalId = id(res, "mobile_signal")
+        nativeTypeId = id(res, "mobile_type")
+        nativeSignalTypeId = id(res, "mobile_signal_type")
         alarmSlot = frameworkString(res, "status_bar_alarm_clock")
         bluetoothSlot = frameworkString(res, "status_bar_bluetooth")
         idsResolved = true
@@ -179,6 +183,16 @@ internal object StatusBarIconManager {
         id == batteryId -> !a.showBatteryIndicator || a.glyph
         id == clockId -> false
         else -> false
+    }
+
+    /** Replaces only the native labels inside a managed row, leaving the signal bars in place. */
+    fun settleNativeTypes(root: View, replace: Boolean) {
+        if (root.id != 0 && (root.id == nativeTypeId || root.id == nativeSignalTypeId)) {
+            if (replace) hide(root) else release(root)
+        }
+        if (root is ViewGroup) {
+            for (i in 0 until root.childCount) settleNativeTypes(root.getChildAt(i), replace)
+        }
     }
 
     /** Walks [root] and puts every icon in it into the state [isOwned] asks for. */

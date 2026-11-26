@@ -21,6 +21,7 @@ import android.view.View
 import androidx.core.graphics.withSave
 import androidx.core.graphics.withTranslation
 import io.github.odomu.honorduo.hook.statusbar.ClockTicker
+import io.github.odomu.honorduo.model.ClockPattern
 import io.github.odomu.honorduo.model.ModuleSettings
 import io.github.odomu.honorduo.model.Prefs
 import io.github.odomu.honorduo.model.StatusAppearance
@@ -101,10 +102,11 @@ class StatusPreviewView @JvmOverloads constructor(
 
     fun setSettings(value: ModuleSettings?) {
         settings = value ?: ModuleSettings.defaults()
-        StatusState.sClockText = "00:01"
-        StatusState.sClockBarText = if (settings.clockSeconds) "00:01:01" else "00:01"
         val today = Calendar.getInstance().time
-        StatusState.sClockDate = ClockTicker.formatDate(today, settings.clockDateFormat)
+        val customTime = ClockPattern.format(settings.clockTimePattern, today)
+        StatusState.sClockText = customTime ?: "00:01"
+        StatusState.sClockBarText = customTime ?: if (settings.clockSeconds) "00:01:01" else "00:01"
+        StatusState.sClockDate = ClockTicker.formatDate(today, settings.clockDateFormat, settings.clockDatePattern)
         StatusState.sClockWeekday = ClockTicker.formatWeekday(today, settings.clockWeekdayFormat)
         StatusState.sClockLunar = ClockTicker.formatLunar(today)
         StatusState.sChargePowerW = PREVIEW_POWER_W
@@ -370,7 +372,7 @@ class StatusPreviewView @JvmOverloads constructor(
 
         // Same two steps the status bar takes: the setting, in dp, resolved against the density, then the reference aspect.
         val dual = reading[1] >= 0
-        val type = if (a.labelInReading()) "5G" else null
+        val type = mobileType.takeIf { a.labelInReading() && it.isNotEmpty() }
         val type2 = if (dual) type else null
         var hostHeight = OutSignalRenderer.outSignalHeight(a, a.outSignalSize, density, dual)
         if (!a.screenshotSignal && a.stackStyle == Prefs.STACK_STYLE_ROWS && dual) {
