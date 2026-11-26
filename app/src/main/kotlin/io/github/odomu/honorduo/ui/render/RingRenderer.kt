@@ -163,11 +163,13 @@ internal object RingRenderer {
         val arcStart = 90f + bottomHalf
         val gapStart = if (topHalf <= 0f) RingGeometry.GAP_NONE else (270f - topHalf - arcStart) / sweep
         val gapEnd = if (topHalf <= 0f) RingGeometry.GAP_NONE else (270f + topHalf - arcStart) / sweep
-        drawBattery(
-            c, level, role, fg, a, gapStart, gapEnd, sweep, arcStart, charging,
-            openLeft = hasLeftDots, openRight = hasRightDots,
-            topHalfDeg = topHalf, bottomHalfDeg = bottomHalf,
-        )
+        if (a.showBatteryIndicator) {
+            drawBattery(
+                c, level, role, fg, a, gapStart, gapEnd, sweep, arcStart, charging,
+                openLeft = hasLeftDots, openRight = hasRightDots,
+                topHalfDeg = topHalf, bottomHalfDeg = bottomHalf,
+            )
+        }
         for (z in 0 until 3) {
             val chain = a.ringZones.getOrNull(z)
             val hasDotInZone = chain != null && chain.any { p ->
@@ -577,8 +579,9 @@ internal object RingRenderer {
     }
 
     private fun drawRingFlankWifi(
-        c: Canvas, wifiLevel: Int, fg: Int, a: StatusAppearance, isLeft: Boolean,
+        c: Canvas, wifiLevel: Int, foreground: Int, a: StatusAppearance, isLeft: Boolean,
     ) {
+        val fg = WifiIconRenderer.color(a.wifiIconColor) ?: foreground
         val cx = IconGeometry.B_CX
         val cy = IconGeometry.B_CY
         val inactive = withAlpha(fg, a.trackAlpha)
@@ -944,7 +947,19 @@ internal object RingRenderer {
      *
      * Inactive levels are rendered using trackAlpha when trackAlpha > 0.
      */
-    internal fun drawWifiArcs(c: Canvas, level: Int, fg: Int, a: StatusAppearance) {
+    private val WIFI_STYLE_PAINT = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    internal fun drawWifiArcs(c: Canvas, level: Int, foreground: Int, a: StatusAppearance) {
+        val fg = WifiIconRenderer.color(a.wifiIconColor) ?: foreground
+        if (a.wifiStyleSwitch || a.wifiIconStyle != Prefs.WIFI_STYLE_ORIGINAL) {
+            val halfWidth = IconGeometry.W_INK_W / 2f
+            val halfHeight = IconGeometry.W_INK_H / 2f
+            ARC.set(IconGeometry.W_CX - halfWidth, IconGeometry.W_INK_CY - halfHeight,
+                IconGeometry.W_CX + halfWidth, IconGeometry.W_INK_CY + halfHeight)
+            WifiIconRenderer.draw(c, ARC, a.wifiIconStyle, a.wifiStyleSwitch,
+                if (level >= 3) 4 else level, fg, a.trackAlpha, a.arcStroke, WIFI_STYLE_PAINT)
+            return
+        }
         val strokeWidth = min(a.arcStroke.toFloat(), IconGeometry.W_MAX_STROKE)
         STROKE.strokeWidth = strokeWidth
         val inactive = withAlpha(fg, a.trackAlpha)

@@ -5,12 +5,10 @@
 # artifacts.
 #
 # The APK is signed with the tracked .tools/debug.keystore, so a new build installs
-# in place over an existing HonorDuo.
+# in place over an existing HonorDuoX.
 name: build
 
-# Only the fork branch is packaged. `main` mirrors upstream, whose sources are
-# not this project's and must not consume runner time; a v* tag still builds,
-# because that is how a release is produced from a fork commit.
+# A version tag builds the APK and publishes it to GitHub Releases.
 on:
   push:
     tags: ['v*']
@@ -19,11 +17,11 @@ on:
       versionName:
         description: versionName to stamp
         required: false
-        default: 1.0.3
+        default: 1.1.0
       versionCode:
         description: versionCode to stamp (must be higher than the installed one)
         required: false
-        default: '10003'
+        default: '10100'
 
 permissions:
   contents: write
@@ -136,7 +134,7 @@ jobs:
             IFS=. read -r major minor patch <<< "$name"
             code=$(( 10#${major:-0} * 10000 + 10#${minor:-0} * 100 + 10#${patch:-0} ))
           else
-            name="${INPUT_NAME:-1.0.3}"
+            name="${INPUT_NAME:-1.1.0}"
             IFS=. read -r major minor patch <<< "$name"
             code=$(( 10#${major:-0} * 10000 + 10#${minor:-0} * 100 + 10#${patch:-0} ))
           fi
@@ -154,11 +152,11 @@ jobs:
         run: |
           mkdir -p dist
           cp app/build/outputs/apk/release/app-release.apk \
-             "dist/HonorDuo-${{ steps.stamp.outputs.name }}.apk"
+             "dist/HonorDuoX-${{ steps.stamp.outputs.name }}.apk"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: HonorDuo-${{ steps.stamp.outputs.name }}
+          name: HonorDuoX-${{ steps.stamp.outputs.name }}
           path: dist/*.apk
           if-no-files-found: error
 
@@ -183,7 +181,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: HonorDuo ${{ steps.stamp.outputs.name }}
+          name: HonorDuoX ${{ steps.stamp.outputs.name }}
           body: ${{ steps.notes.outputs.body }}
           files: dist/*.apk
           prerelease: false

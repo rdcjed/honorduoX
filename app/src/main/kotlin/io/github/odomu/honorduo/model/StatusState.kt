@@ -259,6 +259,27 @@ internal class StatusState(val host: View) {
         @JvmField
         var sDataActivity = 0
 
+        @Volatile
+        private var sNativeActivityAt = 0L
+
+        /** Prefer activity changes reported by the ROM's own mobile icon. */
+        fun noteNativeDataActivity(res: Resources?, resId: Int) {
+            if (res == null || !ModuleConfig.appearance().screenshotSignal) return
+            val direction = when (runCatching { res.getResourceEntryName(resId) }.getOrNull()) {
+                "stat_sys_signal_in" -> 1
+                "stat_sys_signal_out" -> 2
+                "stat_sys_signal_inout" -> 3
+                else -> return
+            }
+            sDataActivity = direction
+            sNativeActivityAt = SystemClock.elapsedRealtime()
+        }
+
+        /** Whether mobile data is enabled for the current data subscription. */
+        @Volatile
+        @JvmField
+        var sMobileDataEnabled = false
+
         /**
          * Joins the date and the weekday into the one line above the time.
          *
@@ -793,6 +814,7 @@ internal class StatusState(val host: View) {
             }
             val levels = intArrayOf(-1, -1)
             var dataSlot = -1
+            var mobileDataEnabled = sMobileDataEnabled
             var enabled = sSlotEnabled
             var known = sSlotKnown
             try {
@@ -801,6 +823,11 @@ internal class StatusState(val host: View) {
                 val tel = context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
                 if (subs == null || tel == null) return
                 val dataSubId = SubscriptionManager.getDefaultDataSubscriptionId()
+                mobileDataEnabled = runCatching {
+                    tel.createForSubscriptionId(dataSubId).isDataEnabled
+                }.getOrElse {
+                    Settings.Global.getInt(context.contentResolver, "mobile_data", 0) != 0
+                }
                 val activeList = subs.activeSubscriptionInfoList
                 // SystemUI itself decides "active" from HwTelephonyManager.getSubState,
                 // not from the active-subscription list: a deactivated SIM can still be
@@ -860,9 +887,11 @@ internal class StatusState(val host: View) {
             val enabledChanged = known != sSlotKnown || !enabled.contentEquals(sSlotEnabled)
             sSlotEnabled = enabled
             sSlotKnown = known
-            val changed = !sSlotLevels.contentEquals(levels) || sDataSlot != dataSlot || enabledChanged
+            val changed = !sSlotLevels.contentEquals(levels) || sDataSlot != dataSlot ||
+                sMobileDataEnabled != mobileDataEnabled || enabledChanged
             sSlotLevels = levels
             sDataSlot = dataSlot
+            sMobileDataEnabled = mobileDataEnabled
             if (changed && BarVisibility.shown) {
                 // This sampler is reached from GlyphView.onDraw. Repainting the hosts from
                 // here would re-enter their refresh pass in the middle of the frame, so the
@@ -993,6 +1022,7 @@ internal class StatusState(val host: View) {
 
         private var sDataActivityStarted = false
         private var sDataActivitySampler = false
+        private var sDataActivityCallback: Any? = null
 
         /**
          * Polls the modem's data-activity counter.
@@ -1011,9 +1041,14 @@ internal class StatusState(val host: View) {
             val tick = object : Runnable {
                 override fun run() {
                     try {
+                        if (ModuleConfig.appearance().screenshotSignal && BarVisibility.shown) {
+                            sampleSimsIfDue()
+                        }
                         val method = tm.javaClass.getMethod("getDataActivity")
                         val direction = (method.invoke(tm) as? Number)?.toInt() ?: 0
-                        if (sDataActivity != direction) {
+                        val recentNative = ModuleConfig.appearance().screenshotSignal &&
+                            SystemClock.elapsedRealtime() - sNativeActivityAt < 2_000L
+                        if (!recentNative && sDataActivity != direction) {
                             sDataActivity = direction
                             SystemUiHook.invalidateHosts()
                         }
@@ -1034,10 +1069,8 @@ internal class StatusState(val host: View) {
                 val tm = context.getSystemService(TelephonyManager::class.java) ?: return
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     val executor = context.mainExecutor
-                    tm.registerTelephonyCallback(
-                        executor,
-                        object : TelephonyCallback(),
-                            TelephonyCallback.DataActivityListener {
+                    val callback = object : TelephonyCallback(),
+                        TelephonyCallback.DataActivityListener {
                             override fun onDataActivity(direction: Int) {
                                 if (sDataActivity != direction) {
                                     sDataActivity = direction
@@ -1045,7 +1078,9 @@ internal class StatusState(val host: View) {
                                 }
                             }
                         }
-                    )
+                    tm.registerTelephonyCallback(executor, callback)
+                    // Telephony keeps a weak reference: retain the callback for SystemUI's lifetime.
+                    sDataActivityCallback = callback
                     sDataActivityStarted = true
                 }
             } catch (_: Throwable) {

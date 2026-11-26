@@ -74,6 +74,7 @@ internal object SignalIconHook {
     private fun noteIcon(view: View?, idObj: Any?) {
         val id = (idObj as? Number)?.toInt() ?: return
         if (id > 0) {
+            StatusState.noteNativeDataActivity(view?.resources, id)
             StatusState.noteSignalIcon(view?.resources, id)
             SystemUiHook.invalidateHosts()
         }

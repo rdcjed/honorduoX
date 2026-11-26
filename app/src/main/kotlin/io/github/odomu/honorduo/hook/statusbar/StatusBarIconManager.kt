@@ -172,10 +172,11 @@ internal object StatusBarIconManager {
      */
     fun isOwned(id: Int, a: StatusAppearance): Boolean = when {
         !a.enabled || StatusBarRowManager.suppressed -> false
-        id == wifiId -> a.glyph && a.ownsWifi()
-        id == mobileId -> !(a.screenshotSignal && StatusState.airplaneMode()) &&
-            ((a.glyph && (a.signalDots() || a.drawsAnySimRow())) || a.stackedOut())
-        id == batteryId -> a.glyph
+        id == wifiId -> !a.showWifiIndicator || (a.glyph && a.ownsWifi())
+        id == mobileId -> !a.showMobileIndicator ||
+            (!(a.screenshotSignal && StatusState.airplaneMode()) &&
+                ((a.glyph && (a.signalDots() || a.drawsAnySimRow())) || a.stackedOut()))
+        id == batteryId -> !a.showBatteryIndicator || a.glyph
         id == clockId -> false
         else -> false
     }

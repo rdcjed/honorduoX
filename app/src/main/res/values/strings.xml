@@ -24,7 +24,7 @@
     <string name="card_type_title">网络类型</string>
     <string name="card_type_summary">网络类型位置、单独显示/信号上方、字号大小、A比例、字重与边距</string>
     <string name="card_readouts_title">硬件读数</string>
-    <string name="card_readouts_summary">充电功率、运行功率、电池温度、电池高温阈值、高温颜色与屏幕帧率</string>
+    <string name="card_readouts_summary">状态栏网速字号、充电功率、运行功率、电池温度与屏幕帧率</string>
     <string name="card_clock_title">时钟日期</string>
     <string name="card_clock_summary">时钟秒数、4种日期格式、农历、星期格式与时间偏移微调</string>
 
@@ -61,7 +61,7 @@
     <string name="stack_label_left">单独显示</string>
     <string name="stack_label_above">信号上方</string>
     <string name="screenshot_signal_title">信号堆叠（原信号样式）</string>
-    <string name="screenshot_signal_summary">双卡上下显示，每张卡显示网络类型和圆头信号</string>
+    <string name="screenshot_signal_summary">双卡上下显示，数据卡信号圆点上方显示流量箭头</string>
     <string name="stack_style_title">堆叠风格</string>
     <string name="stack_style_dots">圆点副卡</string>
     <string name="stack_style_rows">双排柱</string>
@@ -284,7 +284,7 @@
     <string name="stroke_summary_rect">电量条的厚度，胶囊轮廓按比例跟随；默认 14dp，可调 4–20dp。</string>
 
     <string name="wifi_scale_title">Wi-Fi 弧尺寸</string>
-    <string name="wifi_scale_summary">默认 100%，可调 60–160%。在各自样式的适配空间内放大。</string>
+    <string name="wifi_scale_summary" formatted="false">默认 100%，可调 60–160%。在各自样式的适配空间内放大。</string>
     <string name="arc_stroke_title">弧线粗细</string>
     <string name="arc_stroke_summary">默认 12dp，可调 3–16dp。</string>
     <string name="arc_stroke_summary_rect">默认 12dp，可调 3–16dp。</string>
@@ -554,4 +554,26 @@
     <string name="out_bar_width_summary">默认 100% 为原始粗细；40–200，越粗信号条越宽。</string>
     <string name="out_bar_pitch_title">信号点间距</string>
     <string name="out_bar_pitch_summary">默认 100% 为原始间距；60–200，同时作用于信号点之间的空隙。</string>
+    <string name="wifi_style_switch_title">WiFi样式切换</string>
+    <string name="wifi_style_switch_summary">开启显示四道弧线，关闭显示三道弧线</string>
+    <string name="wifi_icon_style_title">WiFi 图标样式</string>
+    <string name="wifi_style_round">圆润弧线</string>
+    <string name="wifi_style_original">原样</string>
+    <string name="wifi_arc_stroke_summary">调整自定义 WiFi 弧线的粗细</string>
+    <string name="wifi_style_loop">圆润回环</string>
+    <string name="wifi_style_fan">分层扇形</string>
+    <string name="wifi_icon_color_title">WiFi 图标颜色</string>
+    <string name="wifi_icon_color_summary">选择状态栏 WiFi 图标的颜色</string>
+    <string name="wifi_color_auto">跟随系统</string>
+    <string name="wifi_color_blue">深蓝色</string>
+    <string name="wifi_color_green">绿色</string>
+    <string name="wifi_color_pink">粉色</string>
+    <string name="network_speed_scale_title">网速字体大小</string>
+    <string name="network_speed_scale_summary">调整状态栏网速数字和单位的字号，100% 为系统大小</string>
+    <string name="show_battery_indicator_title">显示电池图标</string>
+    <string name="show_wifi_indicator_title">显示 WiFi 图标</string>
+    <string name="show_mobile_indicator_title">显示移动信号图标</string>
+    <string name="status_indicator_summary">关闭后隐藏状态栏里的该项图标</string>
+    <string name="status_icon_spacing_title">状态栏图标间距</string>
+    <string name="status_icon_spacing_summary">调整右侧状态栏图标之间的距离。负值更紧凑，正值更宽松。</string>
 </resources>

@@ -127,30 +127,32 @@ internal object CapsuleRenderer {
         val openRight = cap.dotsIn(IconZones.Zone.RIGHT)
         val hasLeftWifi = cap.parts[IconZones.Zone.LEFT.ordinal] == Prefs.PART_WIFI
         val hasRightWifi = cap.parts[IconZones.Zone.RIGHT.ordinal] == Prefs.PART_WIFI
-        buildCapsuleOutline(CAPSULE, topReach, bottomReach, left, right, openLeft, openRight)
-        val animated = a.animatesOutline(charging, level)
-        val wave = if (animated && a.boltAnim == Prefs.BOLT_ANIM_PULSE) pulseWave() else 1f
-        STROKE.color = withAlpha(fg, a.trackAlpha)
-        canvas.drawPath(CAPSULE, STROKE)
+        if (a.showBatteryIndicator) {
+            buildCapsuleOutline(CAPSULE, topReach, bottomReach, left, right, openLeft, openRight)
+            val animated = a.animatesOutline(charging, level)
+            val wave = if (animated && a.boltAnim == Prefs.BOLT_ANIM_PULSE) pulseWave() else 1f
+            STROKE.color = withAlpha(fg, a.trackAlpha)
+            canvas.drawPath(CAPSULE, STROKE)
 
-        if (level > 0) {
-            STROKE.color = withAlpha(role, (255 * wave).toInt())
-            drawCapsuleFill(canvas, min(1f, level / 100f), topReach, bottomReach, left, right, openLeft, openRight)
-        }
+            if (level > 0) {
+                STROKE.color = withAlpha(role, (255 * wave).toInt())
+                drawCapsuleFill(canvas, min(1f, level / 100f), topReach, bottomReach, left, right, openLeft, openRight)
+            }
 
-        if (animated) {
-            when (a.boltAnim) {
-                Prefs.BOLT_ANIM_FLOW -> {
-                    val head = flowHeadColor(role)
-                    drawCapsuleFlow(canvas, head, stroke)
+            if (animated) {
+                when (a.boltAnim) {
+                    Prefs.BOLT_ANIM_FLOW -> {
+                        val head = flowHeadColor(role)
+                        drawCapsuleFlow(canvas, head, stroke)
+                    }
+                    // The spark style moves the outline as well as the bolt. It was drawn
+                    // only for the flow style, which left this one with a completely still
+                    // capsule - the one style whose whole point is that the ink travels.
+                    // Ink colour, for the same reason as the ring: it is what reads on both
+                    // the background and the charged outline.
+                    Prefs.BOLT_ANIM_SPARK -> drawCapsuleSparks(canvas, fg, stroke)
+                    else -> Unit
                 }
-                // The spark style moves the outline as well as the bolt. It was drawn
-                // only for the flow style, which left this one with a completely still
-                // capsule - the one style whose whole point is that the ink travels.
-                // Ink colour, for the same reason as the ring: it is what reads on both
-                // the background and the charged outline.
-                Prefs.BOLT_ANIM_SPARK -> drawCapsuleSparks(canvas, fg, stroke)
-                else -> Unit
             }
         }
 
@@ -1422,9 +1424,10 @@ internal object CapsuleRenderer {
     }
 
     private fun drawCapsuleFlankWifi(
-        c: Canvas, stroke: Float, wifiLevel: Int, fg: Int, a: StatusAppearance,
+        c: Canvas, stroke: Float, wifiLevel: Int, foreground: Int, a: StatusAppearance,
         left: Float, right: Float, isLeft: Boolean,
     ) {
+        val fg = WifiIconRenderer.color(a.wifiIconColor) ?: foreground
         val capR = CapsuleGeometry.CAP_RADIUS
         val capCy = (CapsuleGeometry.CAP_TOP + CapsuleGeometry.CAP_BOTTOM) * 0.5f
         val arcCenterCx = if (isLeft) left + capR else right - capR

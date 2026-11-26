@@ -306,6 +306,24 @@ class SettingsStore(val context: Context) {
     /** The temperature rides with the charger - see [Prefs.KEY_PERF_TEMP_CHARGING_ONLY]. */
     /** Wi-Fi arc size, in percent - see [Prefs.KEY_WIFI_SCALE]. */
     fun setWifiScale(value: Int) = writeInt(Prefs.KEY_WIFI_SCALE, value)
+    fun setShowBatteryIndicator(value: Boolean) = writeBoolean(Prefs.KEY_SHOW_BATTERY_INDICATOR, value)
+    fun setShowWifiIndicator(value: Boolean) = writeBoolean(Prefs.KEY_SHOW_WIFI_INDICATOR, value)
+    fun setShowMobileIndicator(value: Boolean) = writeBoolean(Prefs.KEY_SHOW_MOBILE_INDICATOR, value)
+    fun setWifiStyleOptions(style: Int, fourArcs: Boolean) {
+        val prefs = preferences()
+        prefs.edit {
+            putInt(Prefs.KEY_WIFI_ICON_STYLE, style)
+            putBoolean(Prefs.KEY_WIFI_STYLE_SWITCH, fourArcs)
+        }
+        push {
+            it.putInt(Prefs.KEY_WIFI_ICON_STYLE, style)
+            it.putBoolean(Prefs.KEY_WIFI_STYLE_SWITCH, fourArcs)
+        }
+        notifyModule()
+    }
+    fun setWifiIconColor(value: Int) = writeInt(Prefs.KEY_WIFI_ICON_COLOR, value)
+    fun setNetworkSpeedScale(value: Int) = writeInt(Prefs.KEY_NETWORK_SPEED_SCALE, value)
+    fun setStatusIconSpacing(value: Int) = writeInt(Prefs.KEY_STATUS_ICON_SPACING, value)
 
     /** The capsule's extra straight run - see [Prefs.KEY_CAPSULE_LENGTH]. */
     fun setCapsuleLength(value: Int) = writeInt(Prefs.KEY_CAPSULE_LENGTH, value)
@@ -776,6 +794,14 @@ class SettingsStore(val context: Context) {
             prefs.putBoolean(Prefs.KEY_PERF_TEMP_CHARGING_ONLY, snapshot.perfTempChargingOnly)
             prefs.putBoolean(Prefs.KEY_CHARGING_SHOWS_VALUE, snapshot.chargingShowsValue)
             prefs.putInt(Prefs.KEY_WIFI_SCALE, snapshot.wifiScale)
+            prefs.putBoolean(Prefs.KEY_SHOW_BATTERY_INDICATOR, snapshot.showBatteryIndicator)
+            prefs.putBoolean(Prefs.KEY_SHOW_WIFI_INDICATOR, snapshot.showWifiIndicator)
+            prefs.putBoolean(Prefs.KEY_SHOW_MOBILE_INDICATOR, snapshot.showMobileIndicator)
+            prefs.putBoolean(Prefs.KEY_WIFI_STYLE_SWITCH, snapshot.wifiStyleSwitch)
+            prefs.putInt(Prefs.KEY_WIFI_ICON_STYLE, snapshot.wifiIconStyle)
+            prefs.putInt(Prefs.KEY_WIFI_ICON_COLOR, snapshot.wifiIconColor)
+            prefs.putInt(Prefs.KEY_NETWORK_SPEED_SCALE, snapshot.networkSpeedScale)
+            prefs.putInt(Prefs.KEY_STATUS_ICON_SPACING, snapshot.statusIconSpacing)
             prefs.putInt(Prefs.KEY_CAPSULE_LENGTH, snapshot.capsuleLength)
             prefs.putInt(Prefs.KEY_CAPSULE_LEFT_DX, snapshot.capsuleLeftDx)
             prefs.putInt(Prefs.KEY_CAPSULE_LEFT_DY, snapshot.capsuleLeftDy)

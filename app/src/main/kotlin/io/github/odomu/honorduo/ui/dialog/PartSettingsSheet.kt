@@ -47,6 +47,7 @@ import io.github.odomu.honorduo.ui.component.Swatch
 import io.github.odomu.honorduo.ui.control.ContentControlRow
 import io.github.odomu.honorduo.ui.control.SettingsPart
 import io.github.odomu.honorduo.ui.control.SliderRow
+import io.github.odomu.honorduo.ui.control.ContentControl
 import io.github.odomu.honorduo.ui.control.contentControlsFor
 import io.github.odomu.honorduo.ui.control.roleColorsForPart
 import io.github.odomu.honorduo.ui.control.slidersForEditor
@@ -114,7 +115,9 @@ internal fun PartSettingsSheet(
                         .padding(horizontal = 4.dp),
                 ) {
                     if (compact) preview?.invoke()
-                    controls.forEach { control -> ContentControlRow(control, settings, update, ringSettings) }
+                    controls.filterNot { it == ContentControl.WifiStyleSwitch }.forEach { control ->
+                        ContentControlRow(control, settings, update, ringSettings)
+                    }
                     if (rows.isEmpty() && colors.isEmpty() && controls.isEmpty()) {
                         Text(
                             text = stringResource(R.string.drawing_settings_none),
@@ -211,6 +214,9 @@ internal fun PartSettingsSheet(
                             insideMargin = SettingsItemMargin,
                             onClick = onResetColors,
                         )
+                    }
+                    if (part == SettingsPart.Wifi) {
+                        ContentControlRow(ContentControl.WifiStyleSwitch, settings, update, ringSettings)
                     }
                 }
             }

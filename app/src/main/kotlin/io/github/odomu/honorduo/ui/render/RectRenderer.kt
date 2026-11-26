@@ -70,7 +70,7 @@ internal object RectRenderer {
         if (r.dots) {
             drawRectDots(canvas, mobileLevel, slotLevels, r.dual, fg, a)
         }
-        drawRectBatteryBar(canvas, level, role, fg, a)
+        if (a.showBatteryIndicator) drawRectBatteryBar(canvas, level, role, fg, a)
 
         // One slot at the top, and only one thing in it.
         if (r.bolt) {

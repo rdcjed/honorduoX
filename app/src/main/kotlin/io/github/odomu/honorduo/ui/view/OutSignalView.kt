@@ -20,6 +20,8 @@ internal class OutSignalView(context: Context) : View(context) {
     var dots: Int = -1
     var type: String? = null
     var type2: String? = null
+    var activityRow: Int = -1
+    private val nativeActivityIcons by lazy { NativeSignalActivityIcons.load(context) }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val a = ModuleConfig.appearance()
@@ -47,7 +49,8 @@ internal class OutSignalView(context: Context) : View(context) {
         if (host == null) return
         OutSignalRenderer.drawOutSignal(
             canvas, width, height, bars, dots,
-            foreground, ModuleConfig.appearance(), type, type2,
+            foreground, ModuleConfig.appearance(), type, type2, activityRow, StatusState.sDataActivity,
+            if (activityRow >= 0) nativeActivityIcons?.forDirection(StatusState.sDataActivity) else null,
         )
     }
 }

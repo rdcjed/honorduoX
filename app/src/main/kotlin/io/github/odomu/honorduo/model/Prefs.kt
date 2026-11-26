@@ -204,7 +204,26 @@ object Prefs {
      * exists, so a large value crowded against a thick stroke stops growing rather
      * than spilling over the outline.
      */
+    const val KEY_WIFI_STYLE_SWITCH = "wifi_style_switch"
+    const val DEF_WIFI_STYLE_SWITCH = false
+    const val KEY_WIFI_ICON_STYLE = "wifi_icon_style"
+    const val DEF_WIFI_ICON_STYLE = 0
+    const val WIFI_STYLE_ORIGINAL = 3
+    const val KEY_WIFI_ICON_COLOR = "wifi_icon_color"
+    const val DEF_WIFI_ICON_COLOR = 0
+    const val KEY_NETWORK_SPEED_SCALE = "network_speed_scale"
+    const val KEY_STATUS_ICON_SPACING = "status_icon_spacing"
+    const val DEF_STATUS_ICON_SPACING = 0
+    const val MIN_STATUS_ICON_SPACING = -3
+    const val MAX_STATUS_ICON_SPACING = 8
+    const val DEF_NETWORK_SPEED_SCALE = 100
+    const val MIN_NETWORK_SPEED_SCALE = 60
+    const val MAX_NETWORK_SPEED_SCALE = 100
+
     const val KEY_WIFI_SCALE = "wifi_scale"
+    const val KEY_SHOW_BATTERY_INDICATOR = "show_battery_indicator"
+    const val KEY_SHOW_WIFI_INDICATOR = "show_wifi_indicator"
+    const val KEY_SHOW_MOBILE_INDICATOR = "show_mobile_indicator"
 
     /** The temperature appears and disappears with the charging power (#45). */
     const val KEY_PERF_TEMP_CHARGING_ONLY = "perf_temp_charging_only"

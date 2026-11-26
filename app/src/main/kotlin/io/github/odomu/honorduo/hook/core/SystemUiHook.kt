@@ -72,6 +72,7 @@ internal object SystemUiHook {
         hooked += BtBatteryHook.install(module, cl)
         hooked += CapsuleScaleHook.install(module, cl)
         hooked += NativeSignalTweakHook.install(module, cl)
+        hooked += NetworkSpeedHook.install(module, cl)
         log(
             module,
             "HonorDuo installed, hooks=$hooked enabled=${ModuleConfig.get().enabled}",
@@ -89,6 +90,7 @@ internal object SystemUiHook {
         }
         StatusBarRowManager.syncAll(a)
         StatusBarIconManager.applyIconVisibility(a)
+        NetworkSpeedHook.updateConfig()
         StatusBarIconHook.updateConfig(
             a.replaceWifiIcon,
             a.replaceStatusIcon,

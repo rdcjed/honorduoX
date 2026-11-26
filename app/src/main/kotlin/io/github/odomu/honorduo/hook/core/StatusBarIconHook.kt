@@ -11,6 +11,7 @@ import io.github.libxposed.api.XposedModule
 import io.github.odomu.honorduo.model.ModuleConfig
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
+import java.util.WeakHashMap
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 
@@ -72,6 +73,8 @@ internal object StatusBarIconHook {
     private var sModuleZip: ZipFile? = null
 
     private val sWifiCache = ConcurrentHashMap<String, Bitmap>()
+    private val wifiSignal = Regex("""stat_sys_(?:charged_)?wifi(?:\d|\dplus|\d_plus|\d_\d(?:plus)?)?_signal_([0-4])(?:_fully)?""")
+    private val wifiDrawables = WeakHashMap<StatusWifiDrawable, Unit>()
     private val sStatusCache = ConcurrentHashMap<String, Bitmap>()
     private val RES_ID_ENTRY_CACHE = ConcurrentHashMap<Int, String>()
     private const val EMPTY_ENTRY_SENTINEL = ""
@@ -107,7 +110,7 @@ internal object StatusBarIconHook {
             val result = chain.proceed()
             val res = chain.thisObject as? Resources ?: return@hook result
             val resId = chain.getArg(0) as? Int ?: return@hook result
-            val replacement = lookup(res, resId, wifiOnly = false)
+            val replacement = lookup(res, resId, wifiOnly = false, original = result as? Drawable)
             replacement ?: result
         }
 
@@ -122,7 +125,7 @@ internal object StatusBarIconHook {
             val result = chain.proceed()
             val res = chain.thisObject as? Resources ?: return@hook result
             val resId = chain.getArg(0) as? Int ?: return@hook result
-            val replacement = lookup(res, resId, wifiOnly = false)
+            val replacement = lookup(res, resId, wifiOnly = false, original = result as? Drawable)
             replacement ?: result
         }
 
@@ -137,8 +140,8 @@ internal object StatusBarIconHook {
             val ta = chain.thisObject as? TypedArray ?: return@hook result
             val index = chain.getArg(0) as? Int ?: return@hook result
             val resId = runCatching { ta.getResourceId(index, 0) }.getOrNull() ?: 0
-            if (resId == 0 || !sWifiEnabled) return@hook result
-            val replacement = lookup(ta.resources, resId, wifiOnly = true)
+            if (resId == 0) return@hook result
+            val replacement = lookup(ta.resources, resId, wifiOnly = true, original = result as? Drawable)
             replacement ?: result
         }
 
@@ -158,15 +161,16 @@ internal object StatusBarIconHook {
         sStatusEnabled = replaceStatus
         sHideAlarm = hideAlarm
         sHideBluetooth = hideBluetooth
+        val drawables = synchronized(wifiDrawables) { wifiDrawables.keys.toList() }
+        drawables.forEach { it.invalidateSelf() }
     }
 
     /**
      * Look up replacement drawable by matching resource entry name against asset catalogs.
      */
-    private fun lookup(resources: Resources, resId: Int, wifiOnly: Boolean): Drawable? {
-        // The name below costs a reflective call, and this hook sees every drawable the
-        // host resolves, so the switches are checked before it.
-        if (!sWifiEnabled && !sStatusEnabled && !sHideAlarm && !sHideBluetooth) return null
+    private fun lookup(resources: Resources, resId: Int, wifiOnly: Boolean, original: Drawable?): Drawable? {
+        if (original is StatusWifiDrawable) return null
+        if (resId ushr 24 != 0x7f && !sWifiEnabled && !sStatusEnabled && !sHideAlarm && !sHideBluetooth) return null
         val cached = RES_ID_ENTRY_CACHE[resId]
         if (cached == EMPTY_ENTRY_SENTINEL) return null
         val entry = cached ?: run {
@@ -181,6 +185,18 @@ internal object StatusBarIconHook {
             val hide = (sHideAlarm && entry in ALARM_ENTRIES) ||
                 (sHideBluetooth && entry in BLUETOOTH_ENTRIES)
             if (hide) return Color.TRANSPARENT.toDrawable()
+        }
+
+        if (entry.startsWith("stat_sys_") && "wifi" in entry) {
+            val level = wifiSignal.matchEntire(entry)?.groupValues?.get(1)?.toInt()
+            if (level != null && original != null) {
+                val source = if (sWifiEnabled) {
+                    getIcon(ASSET_WIFI_PREFIX, entry, sWifiCache)?.toDrawable(resources) ?: original
+                } else original
+                return StatusWifiDrawable(source, level).also {
+                    synchronized(wifiDrawables) { wifiDrawables[it] = Unit }
+                }
+            }
         }
 
         if (!sWifiEnabled && !sStatusEnabled) return null

@@ -55,13 +55,16 @@ class StatusAppearance(c: ModuleSettings) {
 
     /** True when both master switch and icon-merging are enabled. */
     @JvmField val glyph: Boolean = enabled && mergeIcons
+    @JvmField val showBatteryIndicator: Boolean = c.showBatteryIndicator
+    @JvmField val showWifiIndicator: Boolean = c.showWifiIndicator
+    @JvmField val showMobileIndicator: Boolean = c.showMobileIndicator
 
     /** The Wi-Fi arcs are wanted; ink also needs a signal - see [wifiInk]. */
-    @JvmField val wifi: Boolean = c.showWifi
+    @JvmField val wifi: Boolean = showWifiIndicator && c.showWifi
 
     /** The mobile level dots are drawn. */
-    @JvmField val mobile: Boolean = c.showMobile
-    @JvmField val showMobileActivity: Boolean = c.showMobileActivity
+    @JvmField val mobile: Boolean = showMobileIndicator && c.showMobile
+    @JvmField val showMobileActivity: Boolean = showMobileIndicator && c.showMobileActivity
 
     /**
      * The type steps aside while Wi-Fi is up; see [Prefs.KEY_TYPE_HIDE_ON_WIFI].
@@ -74,13 +77,18 @@ class StatusAppearance(c: ModuleSettings) {
     @JvmField val typeHideOnWifi: Boolean = c.typeHideOnWifi
 
     /** While charging the ring's centre shows the percentage; see [Prefs.KEY_CHARGING_SHOWS_VALUE]. */
-    @JvmField val chargingShowsValue: Boolean = c.chargingShowsValue
+    @JvmField val chargingShowsValue: Boolean = showBatteryIndicator && c.chargingShowsValue
 
     /** The temperature rides with the charger; see [Prefs.KEY_PERF_TEMP_CHARGING_ONLY]. */
     @JvmField val perfTempChargingOnly: Boolean = c.perfTempChargingOnly
 
     /** Wi-Fi arcs' size, in percent; see [Prefs.KEY_WIFI_SCALE]. */
     @JvmField val wifiScale: Int = c.wifiScale
+    @JvmField val wifiStyleSwitch: Boolean = c.wifiStyleSwitch
+    @JvmField val wifiIconStyle: Int = c.wifiIconStyle
+    @JvmField val wifiIconColor: Int = c.wifiIconColor
+    @JvmField val networkSpeedScale: Int = c.networkSpeedScale
+    @JvmField val statusIconSpacing: Int = c.statusIconSpacing
 
     /** The capsule's extra straight run, in design units; see [Prefs.KEY_CAPSULE_LENGTH]. */
     @JvmField val capsuleLength: Int = c.capsuleLength
@@ -131,10 +139,10 @@ class StatusAppearance(c: ModuleSettings) {
     @JvmField val showPercent: Boolean = c.showPercent
 
     /** The battery percentage is drawn. */
-    @JvmField val value: Boolean = c.showValue
+    @JvmField val value: Boolean = showBatteryIndicator && c.showValue
 
     /** The charging bolt toggle; the free ring gives it a slot of its own. */
-    @JvmField val boltWanted: Boolean = c.showBolt
+    @JvmField val boltWanted: Boolean = showBatteryIndicator && c.showBolt
 
     /** [Prefs.MOBILE_TYPE_OFF], `IN_RING` or `OUT_RING`. */
     @JvmField val typeMode: Int = c.mobileTypeMode
@@ -148,7 +156,7 @@ class StatusAppearance(c: ModuleSettings) {
      * the mode said "outside" was drawn outside anyway. Placement is what the renderer
      * acts on, so placement is what decides.
      */
-    @JvmField val typeInRing: Boolean = c.ringZones.any { it.contains(Prefs.PART_TYPE) }
+    @JvmField val typeInRing: Boolean = showMobileIndicator && c.ringZones.any { it.contains(Prefs.PART_TYPE) }
 
     /**
      * The network type is drawn as a status-bar view outside the glyph.
@@ -157,7 +165,7 @@ class StatusAppearance(c: ModuleSettings) {
      * ring, and the type would otherwise vanish instead of moving to the place the layout
      * has for it.
      */
-    @JvmField val typeOutOfRing: Boolean = enabled && !typeInRing && c.mobileTypeMode == Prefs.MOBILE_TYPE_OUT_RING
+    @JvmField val typeOutOfRing: Boolean = enabled && showMobileIndicator && !typeInRing && c.mobileTypeMode == Prefs.MOBILE_TYPE_OUT_RING
 
     /** The charging power is drawn in the out-of-ring strip; see [perfAnywhere]. */
     @JvmField val perfPower: Boolean = enabled && c.perfPower
@@ -404,7 +412,18 @@ class StatusAppearance(c: ModuleSettings) {
      * There is no second, switch-derived layout: every piece the ring draws is
      * whatever these lists resolve to.
      */
-    @JvmField val ringZones: Array<IntArray> = ModuleSettings.copyZones(c.ringZones)
+    @JvmField val ringZones: Array<IntArray> = if (showBatteryIndicator && showWifiIndicator && showMobileIndicator) {
+        ModuleSettings.copyZones(c.ringZones)
+    } else Array(Prefs.ZONE_COUNT) { zone ->
+        c.ringZones[zone].filter { part ->
+            when (part) {
+                Prefs.PART_VALUE, Prefs.PART_BOLT -> showBatteryIndicator
+                Prefs.PART_WIFI -> showWifiIndicator
+                Prefs.PART_MOBILE, Prefs.PART_SIM_1, Prefs.PART_SIM_2, Prefs.PART_TYPE -> showMobileIndicator
+                else -> true
+            }
+        }.toIntArray()
+    }
 
     /**
      * Whether `part` appears anywhere in the layout, whatever its priority.
@@ -481,8 +500,9 @@ class StatusAppearance(c: ModuleSettings) {
      * Whether the module is drawing the signal outside the glyph as its own stacked
      * reading, rather than leaving the native icon alone.
      */
-    fun stackedOut(): Boolean = screenshotSignal || (signalOutOfRing && stackedSignal) ||
-        (!glyph && (hasRingPart(Prefs.PART_MOBILE) || hasRingPart(Prefs.PART_SIM_1) || hasRingPart(Prefs.PART_SIM_2)))
+    fun stackedOut(): Boolean = showMobileIndicator &&
+        (screenshotSignal || (signalOutOfRing && stackedSignal) ||
+            (!glyph && (hasRingPart(Prefs.PART_MOBILE) || hasRingPart(Prefs.PART_SIM_1) || hasRingPart(Prefs.PART_SIM_2))))
 
     /**
      * Whether the stacked reading draws the per-card network type.
@@ -543,7 +563,7 @@ class StatusAppearance(c: ModuleSettings) {
      * nothing left to charge.
      */
     fun animatesOutline(charging: Boolean, level: Int): Boolean =
-        charging && level < 100 && boltAnimates()
+        showBatteryIndicator && charging && level < 100 && boltAnimates()
 
     /** The ring's level-dot size multiplier, 1.0 for the bead the stroke implies. */
     fun dotScaleFactor(): Float =

@@ -23,6 +23,7 @@ import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import io.github.odomu.honorduo.hook.core.NetworkSpeedHook
 import io.github.odomu.honorduo.hook.core.SystemUiHook
 import io.github.odomu.honorduo.model.StatusState
 
@@ -165,7 +166,9 @@ internal object WifiPresence {
     }
 
     private fun publish(next: Boolean) {
+        val changed = connected != next
         connected = next
+        if (changed) main.post { NetworkSpeedHook.updateConfig() }
         if (!next) StatusState.sWifiLevel = -1
         if (StatusState.setWifiPresent(next)) SystemUiHook.invalidateHosts()
     }

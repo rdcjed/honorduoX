@@ -69,9 +69,15 @@ internal enum class ContentControl(val owner: SettingsPart) {
     MergeIcons(SettingsPart.Appearance),
     Style(SettingsPart.Appearance),
     AntiBurnIn(SettingsPart.Appearance),
+    ShowBatteryIndicator(SettingsPart.Battery),
+    ShowWifiIndicator(SettingsPart.Wifi),
+    ShowMobileIndicator(SettingsPart.Mobile),
     SignalColumns(SettingsPart.Mobile),
     Wifi(SettingsPart.Wifi),
     ReplaceWifiIcon(SettingsPart.Wifi),
+    WifiIconStyle(SettingsPart.Wifi),
+    WifiIconColor(SettingsPart.Wifi),
+    WifiStyleSwitch(SettingsPart.Wifi),
     ReplaceStatusIcon(SettingsPart.Appearance),
     /**
      * The signal card: one switch for the aggregate meter, then one per card.
@@ -297,7 +303,58 @@ internal fun ContentControlRow(
                 dependencies = emptyList(),
             ) { index -> update { it.setSignalColumns(columns[index]) } }
         }
+        ContentControl.ShowBatteryIndicator -> ContentToggle(
+            checked = settings.showBatteryIndicator,
+            title = R.string.show_battery_indicator_title,
+            summaryRes = R.string.status_indicator_summary,
+            dependencies = emptyList(),
+        ) { value -> update { it.setShowBatteryIndicator(value) } }
+        ContentControl.ShowWifiIndicator -> ContentToggle(
+            checked = settings.showWifiIndicator,
+            title = R.string.show_wifi_indicator_title,
+            summaryRes = R.string.status_indicator_summary,
+            dependencies = emptyList(),
+        ) { value -> update { it.setShowWifiIndicator(value) } }
+        ContentControl.ShowMobileIndicator -> ContentToggle(
+            checked = settings.showMobileIndicator,
+            title = R.string.show_mobile_indicator_title,
+            summaryRes = R.string.status_indicator_summary,
+            dependencies = emptyList(),
+        ) { value -> update { it.setShowMobileIndicator(value) } }
         ContentControl.Wifi -> WifiPositionControl(settings, ringSettings, update)
+        ContentControl.WifiIconStyle -> ContentChoice(
+            selected = settings.wifiIconStyle,
+            title = R.string.wifi_icon_style_title,
+            summaryRes = null,
+            options = listOf(R.string.wifi_style_round, R.string.wifi_style_loop,
+                R.string.wifi_style_fan, R.string.wifi_style_original),
+            dependencies = emptyList(),
+        ) { index ->
+            update { it.setWifiStyleOptions(index, settings.wifiStyleSwitch && index != Prefs.WIFI_STYLE_ORIGINAL) }
+        }
+        ContentControl.WifiIconColor -> {
+            // Retain the saved IDs from the test build so existing colors keep their meaning.
+            val colors = listOf(0, 2, 3, 4)
+            ContentChoice(
+                selected = colors.indexOf(settings.wifiIconColor).coerceAtLeast(0),
+                title = R.string.wifi_icon_color_title,
+                summaryRes = R.string.wifi_icon_color_summary,
+                options = listOf(R.string.wifi_color_auto, R.string.wifi_color_blue,
+                    R.string.wifi_color_green, R.string.wifi_color_pink),
+                dependencies = emptyList(),
+            ) { index -> update { it.setWifiIconColor(colors[index]) } }
+        }
+        ContentControl.WifiStyleSwitch -> ContentToggle(
+            checked = settings.wifiStyleSwitch,
+            title = R.string.wifi_style_switch_title,
+            summaryRes = R.string.wifi_style_switch_summary,
+            dependencies = emptyList(),
+        ) { value ->
+            val style = if (value && settings.wifiIconStyle == Prefs.WIFI_STYLE_ORIGINAL) {
+                Prefs.DEF_WIFI_ICON_STYLE
+            } else settings.wifiIconStyle
+            update { it.setWifiStyleOptions(style, value) }
+        }
         ContentControl.ReplaceWifiIcon -> ContentToggle(
             checked = settings.replaceWifiIcon,
             title = R.string.replace_wifi_icon_title,
@@ -325,7 +382,7 @@ internal fun ContentControlRow(
             summaryRes = R.string.stacked_signal_summary,
             dependencies = listOf(a.signalOutOfRing to R.string.ring_position_mobile),
         ) { value -> update { it.setStackedSignal(value) } }
-        ContentControl.MobileActivity -> if (a.signalOutOfRing) {
+        ContentControl.MobileActivity -> if (a.signalOutOfRing && !a.screenshotSignal) {
             ContentToggle(
                 checked = settings.showMobileActivity,
                 title = R.string.show_mobile_activity_title,

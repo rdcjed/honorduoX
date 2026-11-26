@@ -12,8 +12,11 @@
 package io.github.odomu.honorduo.ui.render
 
 import android.graphics.Canvas
+import android.graphics.Bitmap
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import android.graphics.RectF
 import io.github.odomu.honorduo.model.Prefs
 import io.github.odomu.honorduo.model.StatusAppearance
@@ -918,11 +921,13 @@ internal object OutSignalRenderer {
         c: Canvas, width: Int, height: Int, bars: Int, dots: Int,
         fg: Int, a: StatusAppearance,
         type: String? = null, type2: String? = null,
+        activityRow: Int = -1, activityDirection: Int = 0,
+        nativeActivityIcon: Bitmap? = null,
     ): Boolean {
         if (bars < 0 || width <= 0 || height <= 0) {
             return false
         }
-        if (a.screenshotSignal) return drawScreenshotSignal(c, width, height, bars, dots, fg, a, type, type2)
+        if (a.screenshotSignal) return drawScreenshotSignal(c, width, height, bars, dots, fg, a, type, type2, activityRow, activityDirection, nativeActivityIcon)
         if (rowsStyle(a, dots >= 0)) {
             return drawStackRows(c, width, height, bars, dots, fg, a, type, type2)
         }
@@ -1034,6 +1039,8 @@ internal object OutSignalRenderer {
     }
 
     private const val SCREENSHOT_WIDTH_SCALE = 1.2f
+    private val NATIVE_ACTIVITY_PAINT = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+    private var nativeActivityColor: Int? = null
 
     private fun screenshotBarWidth(a: StatusAppearance): Float = 34f * a.outBarWidthFactor()
 
@@ -1050,13 +1057,13 @@ internal object OutSignalRenderer {
             measureType(type, 100f, a.typeSuffixScale),
             if (dual) measureType(type2, 100f, a.typeSuffixScale) else 0f,
         )
-        val activityWidth = if (a.showMobileActivity) 35f else 0f
-        return screenshotBarsWidth(a) + activityWidth + if (label > 0f) label + 16f else 0f
+        return screenshotBarsWidth(a) + if (label > 0f) label + 16f else 0f
     }
 
     private fun drawScreenshotSignal(
         c: Canvas, width: Int, height: Int, first: Int, second: Int,
         fg: Int, a: StatusAppearance, type: String?, type2: String?,
+        activityRow: Int, activityDirection: Int, nativeActivityIcon: Bitmap?,
     ): Boolean {
         val dual = second >= 0
         val inkWidth = screenshotWidth(a, type, type2, dual)
@@ -1070,24 +1077,55 @@ internal object OutSignalRenderer {
         val columns = outColumns(a)
         val barsX = left + (inkWidth - screenshotBarsWidth(a)) * scale
         val inactive = withAlpha(fg, a.trackAlpha)
-        val activityWidth = if (a.showMobileActivity) 35f else 0f
-        if (a.showMobileActivity) {
-            val activity = StatusState.sDataActivity
-            drawDotsActivityArrows(
-                c, barsX - 18f * scale, top + 55f * scale,
-                top + (if (dual) 155f else 100f) * scale,
-                scale, 16f, fg, withAlpha(fg, maxOf(a.trackAlpha, ACTIVITY_IDLE_ALPHA)),
-                activity == 1 || activity == 3, activity == 2 || activity == 3,
-            )
-        }
-        fun row(level: Int, label: String?, y: Float) {
+        fun row(level: Int, label: String?, y: Float, rowIndex: Int) {
             if (!a.hideNetType && !label.isNullOrEmpty()) {
                 applyWeight(700)
                 TEXT.textSize = 100f * scale
                 TEXT.getTextBounds(label, 0, label.length, TEXT_INK)
                 val baseline = y + 100f * scale - TEXT_INK.bottom
                 val labelWidth = measureType(label, 100f * scale, a.typeSuffixScale)
-                drawType(c, label, barsX - (16f + activityWidth) * scale - labelWidth / 2f, baseline, 100f * scale, fg, a)
+                drawType(c, label, barsX - 16f * scale - labelWidth / 2f, baseline, 100f * scale, fg, a)
+            }
+            if (rowIndex == activityRow) {
+                val barWidth = screenshotBarWidth(a) * scale
+                val dotTop = y + 100f * scale - barWidth * SCREENSHOT_WIDTH_SCALE
+                val arrowTop = y + 5f * scale
+                val arrowBottom = dotTop - 4f * scale
+                if (arrowBottom > arrowTop) {
+                    val center = barsX + barWidth / 2f
+                    if (nativeActivityIcon != null) {
+                        if (nativeActivityColor != fg) {
+                            NATIVE_ACTIVITY_PAINT.colorFilter = PorterDuffColorFilter(fg, PorterDuff.Mode.SRC_IN)
+                            nativeActivityColor = fg
+                        }
+                        NATIVE_ACTIVITY_PAINT.alpha = if (activityDirection in 1..3) 255 else ACTIVITY_IDLE_ALPHA
+                        val aspect = nativeActivityIcon.width.toFloat() / nativeActivityIcon.height
+                        val iconHeight = min(arrowBottom - arrowTop, barWidth * SCREENSHOT_WIDTH_SCALE / aspect)
+                        val iconWidth = iconHeight * aspect / SCREENSHOT_WIDTH_SCALE
+                        OUT_BAR.set(center - iconWidth / 2f, arrowBottom - iconHeight,
+                            center + iconWidth / 2f, arrowBottom)
+                        c.drawBitmap(nativeActivityIcon, null, OUT_BAR, NATIVE_ACTIVITY_PAINT)
+                    } else {
+                    val half = barWidth * 0.18f
+                    val up = center - barWidth * 0.22f
+                    val down = center + barWidth * 0.22f
+                    val idleArrow = withAlpha(fg, maxOf(a.trackAlpha, ACTIVITY_IDLE_ALPHA))
+                    ACTIVITY_UP.reset()
+                    ACTIVITY_UP.moveTo(up, arrowTop)
+                    ACTIVITY_UP.lineTo(up - half, arrowBottom)
+                    ACTIVITY_UP.lineTo(up + half, arrowBottom)
+                    ACTIVITY_UP.close()
+                    FILL.color = if (activityDirection == 2 || activityDirection == 3) fg else idleArrow
+                    c.drawPath(ACTIVITY_UP, FILL)
+                    ACTIVITY_DOWN.reset()
+                    ACTIVITY_DOWN.moveTo(down, arrowBottom)
+                    ACTIVITY_DOWN.lineTo(down - half, arrowTop)
+                    ACTIVITY_DOWN.lineTo(down + half, arrowTop)
+                    ACTIVITY_DOWN.close()
+                    FILL.color = if (activityDirection == 1 || activityDirection == 3) fg else idleArrow
+                    c.drawPath(ACTIVITY_DOWN, FILL)
+                    }
+                }
             }
             val lit = levelMapped(level, columns)
             for (i in 0 until columns) {
@@ -1105,8 +1143,8 @@ internal object OutSignalRenderer {
                 }
             }
         }
-        row(first, type, top)
-        if (dual) row(second, type2, top + 110f * scale)
+        row(first, type, top, 0)
+        if (dual) row(second, type2, top + 110f * scale, 1)
         c.restore()
         return true
     }

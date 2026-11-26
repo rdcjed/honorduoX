@@ -161,6 +161,32 @@ internal fun geometrySliders(): List<SliderSpec> {
     val bolt = IconZones.Part.BOLT
     return listOf(
         SliderSpec(
+            group = GeometryGroup.Layout,
+            part = null,
+            min = Prefs.MIN_STATUS_ICON_SPACING,
+            max = Prefs.MAX_STATUS_ICON_SPACING,
+            read = { it.statusIconSpacing },
+            write = { r, v -> r.setStatusIconSpacing(v) },
+            titleRes = { R.string.status_icon_spacing_title },
+            summaryRes = { R.string.status_icon_spacing_summary },
+            enabled = { true },
+            suffix = "dp",
+        ),
+        SliderSpec(
+            group = GeometryGroup.Text,
+            part = null,
+            min = Prefs.MIN_NETWORK_SPEED_SCALE,
+            max = Prefs.MAX_NETWORK_SPEED_SCALE,
+            step = 5,
+            suffix = "%",
+            editorOwner = SettingsPart.Readouts,
+            read = { it.networkSpeedScale },
+            write = { r, v -> r.setNetworkSpeedScale(v) },
+            titleRes = { R.string.network_speed_scale_title },
+            summaryRes = { R.string.network_speed_scale_summary },
+            enabled = { true },
+        ),
+        SliderSpec(
             group = GeometryGroup.Text,
             part = IconZones.Part.CLOCK,
             min = Prefs.MIN_CLOCK_SIZE,
@@ -335,11 +361,7 @@ internal fun geometrySliders(): List<SliderSpec> {
             read = { it.arcStroke },
             write = { r, v -> r.setArcStroke(v) },
             titleRes = { R.string.arc_stroke_title },
-            // In the rectangle the arc group hangs off the top slot by its own
-            // stroke, so this slider moves the arcs as well as thickening them.
-            summaryRes = {
-                if (it.rect) R.string.arc_stroke_summary_rect else R.string.arc_stroke_summary
-            },
+            summaryRes = { R.string.wifi_arc_stroke_summary },
             enabled = { true },
         ),
         SliderSpec(

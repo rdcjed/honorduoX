@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="screenshot_signal_title">Stacked signal (original signal style)</string>
-    <string name="screenshot_signal_summary">Show each SIM on its own row with network type and rounded bars</string>
+    <string name="screenshot_signal_summary">Stack both SIMs and show data activity above the active data SIM’s first dot</string>
     <string name="drawing_order_title">In-ring order</string>
     <string name="app_name">HonorDuoX</string>
     <string name="module_description">Honor status bar · Network, signal and battery, unified</string>
@@ -243,7 +243,7 @@
     <string name="stroke_summary_rect">The bar\'s thickness; the capsule follows at the same ratio. Default 14dp, 4–20dp.</string>
 
     <string name="wifi_scale_title">Wi-Fi arc size</string>
-    <string name="wifi_scale_summary">100% by default, adjustable 60–160%. It grows inside each style\'s own fit.</string>
+    <string name="wifi_scale_summary" formatted="false">100% by default, adjustable 60–160%. It grows inside each style\'s own fit.</string>
     <string name="arc_stroke_title">Arc stroke</string>
     <string name="arc_stroke_summary">The default is 12dp and the slider covers 3–16dp.</string>
     <string name="arc_stroke_summary_rect">The default is 12dp and the slider covers 3–16dp.</string>
@@ -558,4 +558,26 @@
     <string name="out_bar_width_summary">100% keeps the reference width; 40 to 200, wider bars are thicker.</string>
     <string name="out_bar_pitch_title">Signal bar spacing</string>
     <string name="out_bar_pitch_summary">100% keeps the reference pitch; 60 to 200, also moving the gaps between the dots.</string>
+    <string name="wifi_style_switch_title">Wi-Fi style switch</string>
+    <string name="wifi_style_switch_summary">Show four arcs when on, three when off.</string>
+    <string name="wifi_icon_style_title">Wi-Fi icon style</string>
+    <string name="wifi_style_round">Rounded arcs</string>
+    <string name="wifi_style_original">Original</string>
+    <string name="wifi_arc_stroke_summary">Adjust the stroke of custom Wi-Fi arcs.</string>
+    <string name="wifi_style_loop">Rounded loop</string>
+    <string name="wifi_style_fan">Layered fan</string>
+    <string name="wifi_icon_color_title">Wi-Fi icon color</string>
+    <string name="wifi_icon_color_summary">Choose a color for the status bar Wi-Fi icon.</string>
+    <string name="wifi_color_auto">Follow system</string>
+    <string name="wifi_color_blue">Deep blue</string>
+    <string name="wifi_color_green">Green</string>
+    <string name="wifi_color_pink">Pink</string>
+    <string name="network_speed_scale_title">Network speed font size</string>
+    <string name="network_speed_scale_summary">Scale the status bar speed and unit text. 100% uses the system size.</string>
+    <string name="show_battery_indicator_title">Show battery icon</string>
+    <string name="show_wifi_indicator_title">Show Wi-Fi icon</string>
+    <string name="show_mobile_indicator_title">Show mobile signal icon</string>
+    <string name="status_indicator_summary">Turn off to hide this indicator from the status bar.</string>
+    <string name="status_icon_spacing_title">Status bar icon spacing</string>
+    <string name="status_icon_spacing_summary">Adjust the gap between icons on the right. Negative values tighten the spacing.</string>
 </resources>

@@ -1,6 +1,6 @@
-# HonorDuo
+# HonorDuoX
 
-[![版本](https://img.shields.io/github/v/release/odomu/HonorDuo?label=version&color=blue)](https://github.com/odomu/HonorDuo/releases/latest)
+[![版本](https://img.shields.io/github/v/release/rdcjed/honorduoX?label=version&color=blue)](https://github.com/rdcjed/honorduoX/releases/latest)
 [![许可证](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
 [![Android](https://img.shields.io/badge/Android-10%2B-green)](https://developer.android.com)
 [![LSPosed](https://img.shields.io/badge/LSPosed-API%20102-orange)](https://github.com/LSPosed/LSPosed)
@@ -8,7 +8,7 @@
 
 将荣耀 MagicOS 状态栏右侧的 **Wi-Fi、移动信号、电池** 合并为一个仿 iPhone「Duo」风格的三合一字形模块。
 
-全层（宿主层 Hook、图形渲染引擎、状态采样与设置界面）统一采用 Kotlin 实现，应用包名 `io.github.odomu.honorduo`。
+全层（宿主层 Hook、图形渲染引擎、状态采样与设置界面）统一采用 Kotlin 实现，应用包名 `io.github.rdcjed.honorduox`。
 
 <img src="docs/images/statusbar.png" width="100%" alt="状态栏实拍：三合一字形接管 Wi-Fi、信号与电池">
 
@@ -19,7 +19,9 @@
 - **灵动胶囊智能避让**：胶囊展开时基于屏幕物理坐标执行单组件碰撞检测，仅避让受遮挡组件，并智能恢复可用空间内被原生误杀的状态栏图标。
 - **灵活分区与候选**：上、中、下三个区域支持自由点选组件，具备有序候选回退能力。
 - **丰富可放置组件**：电量数字、Wi-Fi 弧、移动信号（支持卡一卡二拆分）、网络类型、充电闪电、功率、温度、帧率、时钟等均可独立放置或交还系统。
-- **信号堆叠（原信号样式）**：双卡信号上下排列，每张卡分别显示网络类型和圆头信号柱，首格为圆点；支持 4 格或 5 格，以及大小、粗细和间距调节。信号与 Wi-Fi、电池保持垂直对齐，关闭三合一图标时也可独立使用。
+- **信号堆叠（原信号样式）**：双卡信号上下排列，每张卡分别显示网络类型和圆头信号柱，首格为圆点；支持 4 格或 5 格，以及大小、粗细和间距调节。信号与 Wi-Fi、电池保持垂直对齐，关闭三合一图标时也可独立使用。流量箭头使用系统图标，显示在当前使用移动数据的 SIM 卡信号上。
+- **Wi‑Fi 图标样式与颜色**：圆润弧线、圆润回环和分层扇形支持三层或四层，可调整尺寸和线条粗细。颜色可选跟随系统、深蓝、柔和绿和粉色。
+- **状态栏网速与图标间距**：「硬件读数」可调整系统网速字号。「基础外观」可调整右侧状态栏图标间距。电池、Wi‑Fi 和移动信号各自有显示开关。
 - **环外读数自适应堆叠**：移动信号支持移至环外，提供**圆点副卡**与**双排柱**两种样式，支持 **4 信号柱与 5 信号柱**自由切换及全维度比例自适应；功率、温度、电流、电压、帧率支持**顺序感知自适应堆叠**，按开启顺序智能拆分与两两堆叠，严格限制双行高度避免压缩字号。
 - **多元时钟与硬件读数**：支持月/日、年/月/日、月日、年月日 4 种无歧义日期格式；支持电池高温阈值（30℃–60℃）与高温专属告警颜色配置。
 - **全局开关完备覆盖**：模块总开关对状态栏、原生电池、图标抑制、通知中心天气与日期、时钟定制执行完备覆盖，关闭时即时无缝归还系统。
@@ -39,8 +41,8 @@
 
 ### 安装步骤
 
-1. 下载并安装最新版 `HonorDuo-*.apk`。
-2. 打开 LSPosed 管理器，启用 **HonorDuo** 模块，并在作用域中勾选**系统界面**（`com.android.systemui`）。
+1. 下载并安装最新版 `HonorDuoX-*.apk`。
+2. 打开 LSPosed 管理器，启用 **HonorDuoX** 模块，并在作用域中勾选**系统界面**（`com.android.systemui`）。
 3. 重启系统界面或重启手机即可生效。
 
 ## 致谢

@@ -20,6 +20,30 @@ import org.robolectric.annotation.GraphicsMode
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class ScreenshotSignalTest {
     @Test
+    fun dataArrowsAreDrawnOnlyAboveSelectedRow() {
+        val a = StatusAppearance(ModuleSettings.defaults().apply { screenshotSignal = true })
+        val h = 420
+        val w = OutSignalRenderer.outSignalWidth(h, a, null, null, true)
+        fun render(row: Int): Bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).also {
+            OutSignalRenderer.drawOutSignal(Canvas(it), w, h, 4, 4, Color.BLACK, a,
+                activityRow = row, activityDirection = 3)
+        }
+        val none = render(-1)
+        val first = render(0)
+        val second = render(1)
+        fun differences(a: Bitmap, b: Bitmap, start: Int, end: Int): Int {
+            var count = 0
+            for (y in start until end) for (x in 0 until w) {
+                if (a.getPixel(x, y) != b.getPixel(x, y)) count++
+            }
+            return count
+        }
+        assertTrue(differences(none, first, 0, h / 2) > 0)
+        assertEquals(0, differences(none, first, h / 2, h))
+        assertEquals(0, differences(none, second, 0, h / 2))
+        assertTrue(differences(none, second, h / 2, h) > 0)
+    }
+    @Test
     fun settingSurvivesCopyBundleAndIncrementalUpdate() {
         val original = ModuleSettings.defaults().apply { screenshotSignal = true }
         assertTrue(original.copy().screenshotSignal)

@@ -39,6 +39,7 @@ import io.github.odomu.honorduo.model.ModuleConfig
 import io.github.odomu.honorduo.model.Prefs
 import io.github.odomu.honorduo.model.StatusAppearance
 import io.github.odomu.honorduo.model.StatusState
+import io.github.odomu.honorduo.model.SignalActivity
 import io.github.odomu.honorduo.ui.render.GlyphInk
 import io.github.odomu.honorduo.ui.render.IconZones
 import io.github.odomu.honorduo.ui.render.OutSignalRenderer
@@ -282,6 +283,7 @@ internal object StatusBarRowManager {
         if (!a.enabled) {
             unmountGlyph(row)
             unmountOutViews(row)
+            StatusIconSpacing.apply(row.container, 0)
             StatusBarIconManager.release(row.battery)
             return
         }
@@ -290,19 +292,24 @@ internal object StatusBarRowManager {
         // which read as the bar blinking.
         if (suppressed) {
             hideAll(row)
+            StatusIconSpacing.apply(row.container, 0)
             StatusBarIconManager.release(row.battery)
             return
         }
-        if (!a.glyph) {
+        val hasMergedContent = a.showBatteryIndicator || a.ringZones.any { it.isNotEmpty() } ||
+            (a.rect && a.signalDots())
+        if (!a.glyph || !hasMergedContent) {
             unmountGlyph(row)
-            StatusBarIconManager.release(row.battery)
+            if (a.showBatteryIndicator) StatusBarIconManager.release(row.battery)
         } else {
             mountGlyph(row)
             row.glyph?.visibility = View.VISIBLE
             StatusBarIconManager.hide(row.battery)
         }
+        if (!a.showBatteryIndicator) StatusBarIconManager.hide(row.battery)
         StatusBarIconManager.settle(row.container, a)
         syncOutViews(row)
+        StatusIconSpacing.apply(row.container, a.statusIconSpacing)
         refreshTint(row)
         val key = measureKey(a)
         if (row.lastMeasureKey != key) {
@@ -494,6 +501,10 @@ internal object StatusBarRowManager {
         }
         signal.type = row.state.slotTypes[firstSlot].ifEmpty { fallback }
         signal.type2 = if (a.dataSimOnly || !dual) null else row.state.slotTypes[1].ifEmpty { fallback }
+        signal.activityRow = SignalActivity.row(
+            a.screenshotSignal && StatusState.sMobileDataEnabled,
+            StatusState.sDataSlot, firstSlot, dual,
+        )
         signal.bars = max(0, reading[0])
         signal.dots = reading[1]
         var height = OutSignalRenderer.outSignalHeight(a, a.outSignalSize, density, dual)
@@ -1061,6 +1072,9 @@ internal object StatusBarRowManager {
         val a = ModuleConfig.appearance()
         for (row in snapshot()) {
             row.state.refresh()
+            if (a.screenshotSignal && row.signal != null) {
+                syncSignal(row, a)
+            }
             if (a.perfPairShown()) {
                 syncPerfReadouts(row, a)
             }
