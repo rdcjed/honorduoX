@@ -56,19 +56,22 @@ internal object StatusBarIconScale {
             return
         }
         val width = view.measuredWidth
-        if (width <= 0 || view.measuredHeight <= 0) return
+        if (width <= 0 && !originals.containsKey(view)) return
         val original = originals.getOrPut(view) { Original(view) }
         val params = view.layoutParams as? ViewGroup.MarginLayoutParams
         if (reserveWidth && params != null) {
             val current = params.marginEnd
             if (current != original.appliedMargin) original.baseMargin = current
-            val target = original.baseMargin + (width * (scale - 1f)).roundToInt()
+            // Empty, still-visible network groups take part in LinearLayout.
+            // Clear their previous width compensation when Wi-Fi or data icons disappear.
+            val target = original.baseMargin + (width.coerceAtLeast(0) * (scale - 1f)).roundToInt()
             original.appliedMargin = target
             if (target != current) {
                 params.marginEnd = target
                 view.layoutParams = params
             }
         }
+        if (width <= 0 || view.measuredHeight <= 0) return
         val pivot = if (view.layoutDirection == View.LAYOUT_DIRECTION_RTL) width.toFloat() else 0f
         val centerY = view.measuredHeight / 2f
         if (!view.isPivotSet || view.pivotX != pivot) view.pivotX = pivot
