@@ -36,8 +36,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -105,6 +107,7 @@ import io.github.odomu.honorduo.ui.manager.UpdateState
 import io.github.odomu.honorduo.ui.manager.rememberBackupManager
 import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.basic.Icon
+import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.SnackbarDuration
 import top.yukonga.miuix.kmp.basic.SnackbarHost
@@ -147,7 +150,8 @@ fun SettingsScreen(repository: SettingsStore) {
     var resettingColors by remember { mutableStateOf(false) }
     var restarting by remember { mutableStateOf(false) }
     var settingsSearch by rememberSaveable { mutableStateOf("") }
-    var activeSettingPart by remember { mutableStateOf<SettingsPart?>(null) }
+    var activeSettingPart by rememberSaveable { mutableStateOf<SettingsPart?>(null) }
+    var showOutside by rememberSaveable { mutableStateOf(false) }
 
     // The section the page is on *is* the top of the back stack, rather than a
     // second piece of state kept in step with it: the strip and the system back
@@ -352,6 +356,17 @@ fun SettingsScreen(repository: SettingsStore) {
                     updater.check()
                 },
             )
+        } else if (activeSettingPart == SettingsPart.Appearance) {
+            val closeAppearance = { activeSettingPart = null }
+            BackHandler(onBack = closeAppearance)
+            SettingsPage(
+                titleRes = R.string.section_appearance,
+                isTop = true,
+                bottomPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding(),
+                onBack = closeAppearance,
+            ) {
+                appearanceSettingsTab(settingsState.value) { block -> update(block) }
+            }
         } else {
             Scaffold(
                 bottomBar = {
@@ -437,8 +452,9 @@ fun SettingsScreen(repository: SettingsStore) {
                     .blur(tabBlurRadius.dp)) {
                     pageStateHolder.SaveableStateProvider(currentTab.name) {
                         SettingsPage(
-                            tab = currentTab,
+                            titleRes = currentTab.labelRes,
                             isTop = currentTab == openTab,
+                            isHome = currentTab == SettingsTab.Layout,
                             bottomPadding = padding.calculateBottomPadding(),
                             onRestart = {
                                 restarter.reset()
@@ -448,6 +464,8 @@ fun SettingsScreen(repository: SettingsStore) {
                             when (currentTab) {
                                 SettingsTab.Layout -> drawingTab(
                                     settings = settingsState.value,
+                                    showOutside = showOutside,
+                                    onShowOutside = { showOutside = it },
                                     update = { block -> update(block) },
                                     onEditColor = { role -> editing = role },
                                     onResetColors = { resettingColors = true },
@@ -458,6 +476,8 @@ fun SettingsScreen(repository: SettingsStore) {
                                     query = settingsSearch,
                                     onQueryChange = { settingsSearch = it },
                                     onOpenPart = { part -> activeSettingPart = part },
+                                    onExportBackup = { backupManager.exportBackup() },
+                                    onImportBackup = { backupManager.importBackup() },
                                 )
 
                                 SettingsTab.About -> aboutTab(
@@ -471,8 +491,6 @@ fun SettingsScreen(repository: SettingsStore) {
                                         update { it.setFontPath("") }
                                         scope.launch { GlyphFontInstaller.remove(fontPath) }
                                     },
-                                    onExportBackup = { backupManager.exportBackup() },
-                                    onImportBackup = { backupManager.importBackup() },
                                     onOpenLogs = { showingLogs = true },
                                     onOpenAboutPage = { showingAboutPage = true },
                                 ) { block -> update(block) }
@@ -549,10 +567,22 @@ fun SettingsScreen(repository: SettingsStore) {
                     onResetColors = { resettingColors = true },
                     onDismiss = { activeSettingPart = null },
                     onDismissFinished = { activeSettingPart = null },
-                    preview = {
-                        Column(Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-                            DrawingSettingsPreview(activePart, settingsState.value, previewScene, isDark)
-                            SceneSelector(previewScene, { previewScene = it }, Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 4.dp))
+                    onOpenTrioLayout = if (activePart == SettingsPart.Trio) {
+                        {
+                            activeSettingPart = null
+                            showOutside = false
+                            selectTab(SettingsTab.Layout)
+                        }
+                    } else null,
+                    preview = if (activePart == SettingsPart.Shade) null else {
+                        {
+                            Column(Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+                                DrawingSettingsPreview(activePart, settingsState.value, previewScene, isDark)
+                                SceneSelector(
+                                    previewScene, { previewScene = it },
+                                    Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 4.dp),
+                                )
+                            }
                         }
                     },
                 )
@@ -612,10 +642,12 @@ fun SettingsScreen(repository: SettingsStore) {
  */
 @Composable
 private fun SettingsPage(
-    tab: SettingsTab,
+    titleRes: Int,
     isTop: Boolean,
     bottomPadding: Dp,
-    onRestart: () -> Unit,
+    isHome: Boolean = false,
+    onRestart: (() -> Unit)? = null,
+    onBack: (() -> Unit)? = null,
     content: LazyListScope.() -> Unit,
 ) {
     val listState = rememberLazyListState()
@@ -626,7 +658,7 @@ private fun SettingsPage(
             else (listState.firstVisibleItemScrollOffset / blurDistance).coerceIn(0f, 1f)
         }
     }
-    val pageTitle = stringResource(tab.labelRes)
+    val pageTitle = stringResource(titleRes)
     val restartTitle = stringResource(R.string.restart_title)
     val surfaceColor = MiuixTheme.colorScheme.surface
     val context = LocalContext.current
@@ -692,16 +724,27 @@ private fun SettingsPage(
                     // layers above (or the opaque fallback when shaders are unsupported),
                     // and a second opaque pass would hide the blur entirely.
                     color = Color.Transparent,
+                    navigationIcon = {
+                        if (onBack != null) {
+                            IconButton(onClick = onBack) {
+                                Icon(
+                                    imageVector = ImageVector.vectorResource(R.drawable.ic_arrow_back),
+                                    contentDescription = stringResource(R.string.back),
+                                    tint = MiuixTheme.colorScheme.onSurface,
+                                )
+                            }
+                        }
+                    },
                     actions = {
-                        GlassIconButton(
-                            icon = ImageVector.vectorResource(R.drawable.ic_lucide_refresh_cw),
-                            description = restartTitle,
-                            backdrop = if (barBlurSupported) pageBackdrop else null,
-                            collapsedFraction = scrollProgress,
-                            // The dialog is the only place a kill can be started, so a
-                            // stale failure from last time must not greet the user.
-                            onClick = onRestart,
-                        )
+                        if (onRestart != null) {
+                            GlassIconButton(
+                                icon = ImageVector.vectorResource(R.drawable.ic_lucide_refresh_cw),
+                                description = restartTitle,
+                                backdrop = if (barBlurSupported) pageBackdrop else null,
+                                collapsedFraction = scrollProgress,
+                                onClick = onRestart,
+                            )
+                        }
                     },
                 )
             }
@@ -717,9 +760,9 @@ private fun SettingsPage(
             SectionList(
                 contentPadding = PaddingValues(
                     start = 12.dp,
-                    top = padding.calculateTopPadding() + if (tab == SettingsTab.Layout) 0.dp else 8.dp,
+                    top = padding.calculateTopPadding() + if (isHome) 0.dp else 8.dp,
                     end = 12.dp,
-                    bottom = bottomPadding + if (tab == SettingsTab.Layout) 12.dp else 24.dp,
+                    bottom = bottomPadding + if (isHome) 12.dp else 24.dp,
                 ),
                 isTop = isTop,
                 listState = listState,

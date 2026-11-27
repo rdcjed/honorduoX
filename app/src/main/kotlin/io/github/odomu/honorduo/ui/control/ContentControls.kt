@@ -73,8 +73,8 @@ private val HomeSwitchMargin = PaddingValues(horizontal = 16.dp, vertical = 8.dp
 
 internal enum class ContentControl(val owner: SettingsPart) {
     Enabled(SettingsPart.Appearance),
-    MergeIcons(SettingsPart.Appearance),
-    Style(SettingsPart.Appearance),
+    MergeIcons(SettingsPart.Trio),
+    Style(SettingsPart.Trio),
     AntiBurnIn(SettingsPart.Appearance),
     ShowBatteryIndicator(SettingsPart.Battery),
     BatteryIconVertical(SettingsPart.Battery),
@@ -210,7 +210,7 @@ internal enum class ContentControl(val owner: SettingsPart) {
      * the module's own glyph.
      */
     CapsuleNoScale(SettingsPart.Appearance),
-    CapsuleThreeCentre(SettingsPart.Appearance),
+    CapsuleThreeCentre(SettingsPart.Trio),
     /** Native secondary-SIM icon removal; owned by the signal card. */
     HideSim2(SettingsPart.Mobile),
     /** Native 5G/4G label removal; owned by the type card. */
@@ -242,8 +242,7 @@ internal fun contentControlsFor(part: SettingsPart): List<ContentControl> =
                 ContentControl.BoltAnimEnabled,
                 ContentControl.BoltAnim,
             ))
-        matchesOwner && !(part == SettingsPart.Appearance &&
-            (it == ContentControl.Enabled || it == ContentControl.MergeIcons || it == ContentControl.Style || it == ContentControl.AntiBurnIn || it == ContentControl.EffectiveScope))
+        matchesOwner
     }
 
 @Composable

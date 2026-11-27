@@ -8,20 +8,16 @@ import android.os.Build
 import android.provider.Settings
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
@@ -36,14 +32,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
@@ -52,7 +45,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.pm.PackageInfoCompat
@@ -61,18 +53,19 @@ import io.github.odomu.honorduo.R
 import io.github.odomu.honorduo.model.ModuleSettings
 import io.github.odomu.honorduo.model.Prefs
 import io.github.odomu.honorduo.model.StatusAppearance
-import io.github.odomu.honorduo.ui.component.ActivatedBadge
-import io.github.odomu.honorduo.ui.component.ActivatedBadgeDark
 import io.github.odomu.honorduo.ui.component.ActivatedContainer
 import io.github.odomu.honorduo.ui.component.ActivatedContainerDark
 import io.github.odomu.honorduo.ui.component.ActivatedContent
 import io.github.odomu.honorduo.ui.component.GlassDropdownPreference
 import io.github.odomu.honorduo.ui.component.SettingTile
-import io.github.odomu.honorduo.ui.component.SettingsItemMargin
 import io.github.odomu.honorduo.ui.component.isDarkTheme
 import io.github.odomu.honorduo.ui.control.ContentControl
+import io.github.odomu.honorduo.ui.control.ContentControlRow
 import io.github.odomu.honorduo.ui.control.SettingsPart
+import io.github.odomu.honorduo.ui.control.SliderRow
+import io.github.odomu.honorduo.ui.control.contentControlsFor
 import io.github.odomu.honorduo.ui.control.geometrySliders
+import io.github.odomu.honorduo.ui.control.slidersForEditor
 import io.github.odomu.honorduo.ui.manager.AppUpdater
 import io.github.odomu.honorduo.ui.manager.SettingsStore
 import io.github.odomu.honorduo.ui.manager.UpdateState
@@ -83,13 +76,13 @@ import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.CircularProgressIndicator
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
+import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.utils.PressFeedbackType
 import java.io.File
 
 /**
@@ -104,7 +97,7 @@ private class SettingEntry(
     val part: SettingsPart,
 )
 
-private val SETTING_ENTRIES = listOf(
+private val STATUS_BAR_ENTRIES = listOf(
     SettingEntry(
         R.string.section_appearance, R.string.card_appearance_summary,
         R.drawable.ic_card_appearance, SettingsPart.Appearance,
@@ -139,8 +132,30 @@ private val SETTING_ENTRIES = listOf(
     ),
 )
 
-/** Settings tab: a two-column grid of tiles, each opening its own sheet. */
-internal fun LazyListScope.settingsTab(query: String, onQueryChange: (String) -> Unit, onOpenPart: (SettingsPart) -> Unit) {
+private data class SettingsLink(
+    @StringRes val title: Int,
+    @StringRes val summary: Int,
+    @DrawableRes val icon: Int,
+    val open: () -> Unit,
+)
+
+internal fun LazyListScope.settingsTab(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onOpenPart: (SettingsPart) -> Unit,
+    onExportBackup: () -> Unit,
+    onImportBackup: () -> Unit,
+) {
+    val trio = SettingsLink(
+        R.string.settings_trio_title, R.string.settings_trio_summary, R.drawable.ic_lucide_circle_dot,
+    ) { onOpenPart(SettingsPart.Trio) }
+    val backup = listOf(
+        SettingsLink(R.string.backup_export_title, R.string.settings_export_summary,
+            R.drawable.ic_lucide_share, onExportBackup),
+        SettingsLink(R.string.backup_import_title, R.string.settings_import_summary,
+            R.drawable.ic_lucide_rotate_ccw, onImportBackup),
+    )
+
     item(key = "settings-search") {
         SettingsSearchField(query, onQueryChange)
     }
@@ -161,7 +176,10 @@ internal fun LazyListScope.settingsTab(query: String, onQueryChange: (String) ->
                     )
                 }
             }
-            if (results.isEmpty()) {
+            val links = (listOf(trio) + backup).filter {
+                settingSearchMatches(needle, context.getString(it.title), context.getString(it.summary))
+            }
+            if (results.isEmpty() && links.isEmpty()) {
                 Box(Modifier.fillMaxWidth().padding(vertical = 56.dp), contentAlignment = Alignment.Center) {
                     Text(
                         text = stringResource(R.string.settings_search_empty),
@@ -185,32 +203,110 @@ internal fun LazyListScope.settingsTab(query: String, onQueryChange: (String) ->
                             onClick = { onOpenPart(entry.part) },
                         )
                     }
+                    links.forEach { entry ->
+                        SearchResultRow(
+                            title = stringResource(entry.title),
+                            summary = stringResource(entry.summary),
+                            query = needle,
+                            onClick = entry.open,
+                        )
+                    }
                 }
             }
         }
         return
     }
-    SETTING_ENTRIES.chunked(2).forEach { pair ->
+    val statusBar = STATUS_BAR_ENTRIES.map { entry ->
+        SettingsLink(entry.title, entry.summary, entry.icon) { onOpenPart(entry.part) }
+    }
+    settingsLinkSection(R.string.settings_group_trio, listOf(trio), columns = 1)
+    settingsLinkSection(R.string.settings_group_status_bar, statusBar, columns = 2)
+    settingsLinkSection(R.string.settings_group_backup, backup, columns = 2)
+}
+
+private fun LazyListScope.settingsLinkSection(
+    @StringRes title: Int,
+    links: List<SettingsLink>,
+    columns: Int,
+) {
+    settingsGroupTitle(title)
+    links.chunked(columns).forEach { pair ->
         item(key = "tile-${pair[0].title}") {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 3.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    .padding(horizontal = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 pair.forEach { entry ->
                     SettingTile(
                         title = stringResource(entry.title),
                         summary = stringResource(entry.summary),
                         icon = ImageVector.vectorResource(entry.icon),
-                        onClick = { onOpenPart(entry.part) },
+                        onClick = entry.open,
                         modifier = Modifier.weight(1f),
+                        showChevron = columns == 1,
                     )
                 }
                 // An odd count would leave the last tile stretched across the row; a spacer
                 // keeps it half-width and in its column.
-                if (pair.size == 1) Spacer(Modifier.weight(1f))
+                if (pair.size < columns) Spacer(Modifier.weight(1f))
             }
+        }
+    }
+}
+
+private fun LazyListScope.settingsGroupTitle(@StringRes title: Int) {
+    item(key = "settings-group-$title") {
+        SmallTitle(
+            text = stringResource(title),
+            insideMargin = PaddingValues(start = 8.dp, top = 7.dp, end = 8.dp, bottom = 2.dp),
+        )
+    }
+}
+
+internal fun LazyListScope.appearanceSettingsTab(
+    settings: ModuleSettings,
+    update: ((SettingsStore) -> Unit) -> Unit,
+) {
+    val appearance = StatusAppearance.of(settings)
+    val controls = contentControlsFor(SettingsPart.Appearance)
+    val displayControls = setOf(
+        ContentControl.AntiBurnIn, ContentControl.EffectiveScope,
+        ContentControl.CapsuleNoScale, ContentControl.Enabled,
+    )
+    settingsGroupTitle(R.string.settings_appearance_size)
+    item(key = "appearance-size") {
+        Card(Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+            Column {
+                slidersForEditor(SettingsPart.Appearance).filter { it.enabled(appearance) }.forEach { slider ->
+                    SliderRow(slider, settings, update)
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 48.dp, bottom = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        for (bound in listOf(slider.min, slider.maxFor(appearance))) {
+                            Text(
+                                text = "$bound${slider.suffix.orEmpty()}",
+                                style = MiuixTheme.textStyles.footnote2,
+                                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+    settingsGroupTitle(R.string.settings_appearance_icons)
+    item(key = "appearance-icons") {
+        Card(Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+            controls.filterNot { it in displayControls }.forEach { ContentControlRow(it, settings, update) }
+        }
+    }
+    settingsGroupTitle(R.string.settings_appearance_display)
+    item(key = "appearance-display") {
+        Card(Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+            displayControls.filter { it in controls }.forEach { ContentControlRow(it, settings, update) }
         }
     }
 }
@@ -364,7 +460,7 @@ internal fun highlightMatch(text: String, query: String, accent: Color): Annotat
     }
 }
 
-/** Home page: activation banner, activation state, info, backup & restore, logs, about, font and nav styles. */
+/** About tab: activation, updates, logs, font and navigation styles. */
 internal fun LazyListScope.aboutTab(
     settings: ModuleSettings,
     repository: SettingsStore,
@@ -373,13 +469,12 @@ internal fun LazyListScope.aboutTab(
     installingFont: Boolean,
     onChooseFont: () -> Unit,
     onClearFont: (String) -> Unit,
-    onExportBackup: () -> Unit,
-    onImportBackup: () -> Unit,
     onOpenLogs: () -> Unit,
     onOpenAboutPage: () -> Unit,
     update: ((SettingsStore) -> Unit) -> Unit,
 ) {
     val isActivated = service != null
+    val rowMargin = PaddingValues(horizontal = 16.dp, vertical = 7.dp)
     val scopes = runCatching { service?.scope }.getOrNull() ?: emptyList()
     val hasSystemUiScope = scopes.contains("com.android.systemui")
     if (!isActivated) {
@@ -403,26 +498,13 @@ internal fun LazyListScope.aboutTab(
     item { ActivatedRow(settings = settings, service = service) }
     item { InfoCard(service = service) }
 
-    item { Spacer(Modifier.height(12.dp)) }
     item {
         Card {
-            LauncherIconEntry()
-            ArrowPreference(
-                title = stringResource(R.string.backup_export_title),
-                summary = stringResource(R.string.backup_export_summary),
-                insideMargin = SettingsItemMargin,
-                onClick = onExportBackup,
-            )
-            ArrowPreference(
-                title = stringResource(R.string.backup_import_title),
-                summary = stringResource(R.string.backup_import_summary),
-                insideMargin = SettingsItemMargin,
-                onClick = onImportBackup,
-            )
+            LauncherIconEntry(rowMargin)
             ArrowPreference(
                 title = stringResource(R.string.log_viewer_title),
                 summary = stringResource(R.string.log_viewer_summary),
-                insideMargin = SettingsItemMargin,
+                insideMargin = rowMargin,
                 onClick = onOpenLogs,
             )
             val aboutSummary = when (val s = updater.state) {
@@ -437,7 +519,7 @@ internal fun LazyListScope.aboutTab(
             ArrowPreference(
                 title = stringResource(R.string.about_title),
                 summary = aboutSummary,
-                insideMargin = SettingsItemMargin,
+                insideMargin = rowMargin,
                 endActions = {
                     if (updater.state is UpdateState.Checking || updater.state is UpdateState.Downloading) {
                         CircularProgressIndicator(size = 18.dp, modifier = Modifier.padding(end = 4.dp))
@@ -448,7 +530,6 @@ internal fun LazyListScope.aboutTab(
         }
     }
 
-    item { Spacer(Modifier.height(12.dp)) }
     item {
         Card {
             GlassDropdownPreference(
@@ -459,7 +540,7 @@ internal fun LazyListScope.aboutTab(
                     stringResource(R.string.language_en),
                 ),
                 selectedIndex = repository.getAppLanguage(),
-                insideMargin = SettingsItemMargin,
+                insideMargin = rowMargin,
             ) { index ->
                 repository.setAppLanguage(index)
                 (repository.context as? Activity)?.recreate()
@@ -472,7 +553,7 @@ internal fun LazyListScope.aboutTab(
                     stringResource(R.string.nav_style_liquid),
                 ),
                 selectedIndex = Prefs.normalizeNavStyle(settings.navStyle),
-                insideMargin = SettingsItemMargin,
+                insideMargin = rowMargin,
             ) { index -> update { it.setNavStyle(index) } }
             GlassDropdownPreference(
                 title = stringResource(R.string.nav_labels_title),
@@ -482,12 +563,11 @@ internal fun LazyListScope.aboutTab(
                     stringResource(R.string.nav_labels_text),
                 ),
                 selectedIndex = Prefs.normalizeNavLabels(settings.navLabels),
-                insideMargin = SettingsItemMargin,
+                insideMargin = rowMargin,
             ) { index -> update { it.setNavLabels(index) } }
         }
     }
 
-    item { Spacer(Modifier.height(12.dp)) }
     item {
         Card {
             val chosen = settings.fontPath
@@ -498,7 +578,7 @@ internal fun LazyListScope.aboutTab(
                     chosen.isEmpty() -> stringResource(R.string.font_summary_system)
                     else -> File(chosen).name
                 },
-                insideMargin = SettingsItemMargin,
+                insideMargin = rowMargin,
                 enabled = !installingFont,
                 onClick = onChooseFont,
             )
@@ -510,7 +590,7 @@ internal fun LazyListScope.aboutTab(
                 } else {
                     stringResource(R.string.font_clear_summary)
                 },
-                insideMargin = SettingsItemMargin,
+                insideMargin = rowMargin,
                 enabled = !nothingToClear && !installingFont,
                 onClick = { onClearFont(chosen) },
             )
@@ -529,14 +609,13 @@ fun ActivationBanner(
     val contentColor = if (isWarning) Color(0xFFB71C1C) else Color(0xFF1B5E20)
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 12.dp),
+            .fillMaxWidth(),
         colors = CardDefaults.defaultColors(
             color = if (isDarkTheme()) Color(0xFF2C1E1E) else bg,
             contentColor = contentColor,
         ),
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 9.dp)) {
             Text(
                 text = title,
                 style = MiuixTheme.textStyles.headline2,
@@ -553,147 +632,67 @@ fun ActivationBanner(
 }
 
 @Composable
-fun ActivatedRow(settings: ModuleSettings, service: XposedService?) {
+private fun ActivatedRow(settings: ModuleSettings, service: XposedService?) {
     val context = LocalContext.current
     val module = remember(context) { readModuleInfo(context) }
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        ActivatedCard(
-            active = service != null,
-            version = module.moduleVersion,
-            modifier = Modifier
-                .weight(1f)
-                .aspectRatio(1f),
-        )
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .aspectRatio(1f),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            StatCard(
-                label = stringResource(R.string.about_hook_count),
-                value = hookCount(settings).toString(),
-                modifier = Modifier.weight(1f),
-            )
-            StatCard(
-                label = stringResource(R.string.about_enabled_count),
-                value = enabledCount(settings).toString(),
-                modifier = Modifier.weight(1f),
-            )
-        }
-    }
-}
-
-@Composable
-fun ActivatedCard(active: Boolean, version: String, modifier: Modifier = Modifier) {
     val dark = isDarkTheme()
     val content = if (dark) MiuixTheme.colorScheme.onSurface else ActivatedContent
-
     Card(
-        modifier = modifier.fillMaxHeight(),
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.defaultColors(
             color = if (dark) ActivatedContainerDark else ActivatedContainer,
             contentColor = content,
         ),
-        pressFeedbackType = PressFeedbackType.Tilt,
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clipToBounds(),
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-            ) {
+            Column(Modifier.weight(1.35f)) {
                 Text(
-                    text = stringResource(
-                        if (active) R.string.about_activated else R.string.about_inactive,
-                    ),
-                    fontSize = 20.sp,
+                    text = stringResource(if (service != null) R.string.about_activated else R.string.about_inactive),
+                    style = MiuixTheme.textStyles.body1,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
-                    text = if (active) {
-                        stringResource(R.string.about_module_version, version)
+                    text = if (service != null) {
+                        stringResource(R.string.about_module_version, module.moduleVersion)
                     } else {
                         stringResource(R.string.about_inactive_hint)
                     },
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = content,
+                    style = MiuixTheme.textStyles.footnote2,
                     modifier = Modifier.padding(top = 2.dp),
                 )
             }
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .offset(27.dp, 31.dp),
-                contentAlignment = Alignment.BottomEnd,
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.ic_check_circle_outline),
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(if (dark) ActivatedBadgeDark else ActivatedBadge),
-                    modifier = Modifier.size(110.dp),
-                )
-            }
+            AboutStat(stringResource(R.string.about_hook_count), hookCount(settings), Modifier.weight(1f))
+            AboutStat(stringResource(R.string.about_enabled_count), enabledCount(settings), Modifier.weight(1f))
         }
     }
 }
 
 @Composable
-fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier.fillMaxHeight(),
-        pressFeedbackType = PressFeedbackType.Tilt,
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(14.dp),
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Text(
-                text = label,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-            )
-            Text(
-                text = value,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(top = 2.dp),
-            )
-        }
+private fun AboutStat(label: String, value: Int, modifier: Modifier) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value.toString(), style = MiuixTheme.textStyles.body1, fontWeight = FontWeight.SemiBold)
+        Text(label, style = MiuixTheme.textStyles.footnote2)
     }
 }
 
 @Composable
-fun InfoRow(label: String, value: String, bottomPadding: Dp = 24.dp) {
-    Text(
-        text = label,
-        style = MiuixTheme.textStyles.body1,
-        color = MiuixTheme.colorScheme.onSurface,
-        modifier = Modifier.padding(bottom = 2.dp),
-    )
-    Text(
-        text = value,
-        style = MiuixTheme.textStyles.body2,
-        color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-        modifier = Modifier.padding(bottom = bottomPadding),
-    )
+private fun InfoRow(label: String, value: String) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(label, style = MiuixTheme.textStyles.footnote1, modifier = Modifier.weight(0.9f))
+        Text(
+            value, style = MiuixTheme.textStyles.footnote1,
+            color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+            modifier = Modifier.weight(2.1f),
+        )
+    }
 }
 
 @Composable
-fun LauncherIconEntry() {
+private fun LauncherIconEntry(rowMargin: PaddingValues) {
     val context = LocalContext.current
     var hidden by remember(context) { mutableStateOf(isLauncherIconHidden(context)) }
     var showConfirm by remember { mutableStateOf(false) }
@@ -710,7 +709,7 @@ fun LauncherIconEntry() {
         },
         title = stringResource(R.string.about_hide_icon),
         summary = stringResource(R.string.about_hide_icon_summary),
-        insideMargin = SettingsItemMargin,
+        insideMargin = rowMargin,
     )
 
     if (showConfirm) {
@@ -771,13 +770,16 @@ private fun setLauncherIconHidden(context: Context, hidden: Boolean) {
 }
 
 @Composable
-fun InfoCard(service: XposedService?) {
+private fun InfoCard(service: XposedService?) {
     val context = LocalContext.current
     val unknown = stringResource(R.string.info_unknown)
     val module = remember(context) { readModuleInfo(context) }
     val framework = remember(service, unknown) { readFrameworkInfo(service, unknown) }
     Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp),
+        ) {
             InfoRow(stringResource(R.string.info_module_version), module.moduleVersion)
             InfoRow(stringResource(R.string.info_xposed_version), framework)
             InfoRow(stringResource(R.string.info_device_model), module.deviceModel)
@@ -785,7 +787,6 @@ fun InfoCard(service: XposedService?) {
             InfoRow(
                 label = stringResource(R.string.info_system_fingerprint),
                 value = module.systemFingerprint,
-                bottomPadding = 4.dp,
             )
         }
     }

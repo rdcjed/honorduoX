@@ -13,19 +13,33 @@
 
     <string name="tab_settings">设置</string>
     <string name="section_appearance">基础外观</string>
-    <string name="card_appearance_summary">整体尺寸、胶囊内边距、胶囊长度及位置微调</string>
+    <string name="card_appearance_summary">整体缩放 · 左右间距</string>
+    <string name="settings_group_status_bar">状态栏</string>
+    <string name="settings_group_trio">三合一</string>
+    <string name="settings_group_backup">备份恢复</string>
+    <string name="status_bar_height_title">状态栏高度</string>
+    <string name="status_bar_height_summary">0 dp 跟随系统，可调 −8 到 +16 dp。降低时保留开孔和图标所需空间。</string>
+    <string name="settings_trio_title">合并风格与尺寸</string>
+    <string name="settings_trio_summary">圆环、胶囊、描边和组件位置</string>
+    <string name="settings_trio_layout_title">组件位置</string>
+    <string name="settings_trio_layout_summary">在首页预览并调整圆环或胶囊中的组件</string>
+    <string name="settings_export_summary">保存当前配置</string>
+    <string name="settings_import_summary">从文件恢复配置</string>
+    <string name="settings_appearance_size">大小与间距</string>
+    <string name="settings_appearance_icons">状态图标</string>
+    <string name="settings_appearance_display">显示</string>
     <string name="card_battery_title">电池电量</string>
-    <string name="card_battery_summary">电量数字、百分比、充电显示、电量字号字重、低电量阈值与状态颜色</string>
+    <string name="card_battery_summary">显隐 · 大小 · 竖向样式</string>
         <string name="card_wifi_title">无线网络</string>
-    <string name="card_wifi_summary">显示 Wi-Fi 弧开关、Wi-Fi 弧尺寸与弧线粗细微调</string>
+    <string name="card_wifi_summary">Wi-Fi 样式 · 颜色</string>
     <string name="card_mobile_title">移动信号</string>
-    <string name="card_mobile_summary">移动信号点、双卡独立设置、堆叠风格、4柱/5柱、流量活动图标、读数间距</string>
+    <string name="card_mobile_summary">双卡堆叠 · 信号格数</string>
     <string name="card_type_title">网络类型</string>
-    <string name="card_type_summary">网络类型位置、单独显示/信号上方、字号大小、A比例、字重与边距</string>
+    <string name="card_type_summary">5G 标签 · 字号和字重</string>
     <string name="card_readouts_title">硬件读数</string>
-    <string name="card_readouts_summary">状态栏网速字号、硬件读数开关与显示位置</string>
+    <string name="card_readouts_summary">网速 · 温度 · 功率</string>
     <string name="card_clock_title">时钟日期</string>
-    <string name="card_clock_summary">自定义时间和日期格式、农历、星期格式与位置微调</string>
+    <string name="card_clock_summary">时间格式 · 日期 · 农历</string>
 
     <string name="drawing_order_title">环内排序</string>
 
@@ -197,8 +211,8 @@
     <string name="mobile_type_outside">环外</string>
     <string name="show_out_type_title">显示环外网络类型</string>
     <string name="show_out_type_summary">关闭后不在状态栏环外及堆叠信号上显示 5G/4G 等网络制式。</string>
-    <string name="drawing_part_shade">下拉面板</string>
-    <string name="card_shade_summary">控制中心隐藏电源键，通知面板隐藏铃铛并显示农历、天气。</string>
+    <string name="drawing_part_shade">控制中心</string>
+    <string name="card_shade_summary">面板按钮、农历和天气显示</string>
     <string name="shade_hide_power_title">隐藏关机</string>
     <string name="shade_hide_power_summary">收起控制中心（右侧下拉）右上角的电源按钮，关机仍可长按物理电源键。</string>
     <string name="shade_hide_bell_title">隐藏铃铛</string>

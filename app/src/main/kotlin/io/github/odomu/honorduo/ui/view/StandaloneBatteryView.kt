@@ -39,7 +39,7 @@ internal class StandaloneBatteryView(context: Context) : View(context) {
         val scaleX = width / designW
         val scaleY = height / designH
         val fill = when {
-            charging -> Prefs.DEF_COLOR_CHARGING_ON_DARK
+            charging -> Prefs.COLOR_BATTERY_CHARGING
             powerSave -> 0xFFD59A28.toInt()
             low -> Prefs.DEF_COLOR_LOW_ON_LIGHT
             else -> foreground

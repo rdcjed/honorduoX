@@ -5,6 +5,7 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import io.github.odomu.honorduo.model.Prefs
+import io.github.odomu.honorduo.model.StatusAppearance
 
 /** Upright Wi-Fi shapes in a 48 × 36 box, shared by the status bar and merged icon. */
 internal object WifiIconRenderer {
@@ -26,9 +27,11 @@ internal object WifiIconRenderer {
     private val loopThree = LoopPaths(3)
     private val loopFour = LoopPaths(4)
 
-    fun color(preset: Int): Int? = when (preset) {
+    fun color(preset: Int, appearance: StatusAppearance, foreground: Int): Int? = when (preset) {
         2 -> 0xff005fb5.toInt()
-        3 -> 0xff43a047.toInt()
+        3 -> if (appearance.glyph && appearance.roleColors) {
+            if (GlyphInk.isDarkBackground(foreground)) appearance.chargingOnDark else appearance.chargingOnLight
+        } else Prefs.COLOR_BATTERY_CHARGING
         4 -> 0xffef4999.toInt()
         else -> null
     }

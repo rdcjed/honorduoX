@@ -15,6 +15,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.PorterDuff
 import android.view.View
+import io.github.odomu.honorduo.hook.core.StatusBarHeightHook
 import io.github.odomu.honorduo.hook.tracker.BarVisibility
 import io.github.odomu.honorduo.hook.tracker.ScreenStateTracker
 import io.github.odomu.honorduo.model.ModuleConfig
@@ -120,13 +121,17 @@ internal class GlyphView(context: Context) : View(context) {
         // height - less a small margin so the rounded strokes keep their edge - is the
         // hard ceiling; the parent's offered height can be the whole window.
         val wanted = (wantedBase * grow).roundToInt()
-        val barCap = if (barHeightPx > 0) (barHeightPx - 2f * density).roundToInt() else Int.MAX_VALUE
+        val adjustedBarHeight = StatusBarHeightHook.currentHeight(context)
+        val barHeight = adjustedBarHeight ?: barHeightPx
+        val barCap = if (barHeight > 0) (barHeight - 2f * density).roundToInt() else Int.MAX_VALUE
         val offeredCap = if (offered > 0) offered else Int.MAX_VALUE
         // The bar only caps growth; at or below 100% the box keeps its 1.0.7 size even
         // on a ROM whose bar reads shorter than the glyph. Above 100% the ceiling is the
         // bar itself: `HwSystemIcons` offers the icon box, and honouring that spec threw
         // away every step of the size slider.
-        val height = if (grow > 1f) {
+        val height = if (adjustedBarHeight != null) {
+            minOf(wanted, barCap, if (grow > 1f) Int.MAX_VALUE else offeredCap)
+        } else if (grow > 1f) {
             minOf(wanted, maxOf(wantedBase, barCap))
         } else {
             minOf(offeredCap, wanted)

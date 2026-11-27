@@ -28,7 +28,21 @@
     <string name="card_clock_title">Clock &amp; Date</string>
     <string name="card_clock_summary">Custom time and date formats, lunar calendar, weekdays and offsets</string>
     <string name="section_appearance">Appearance</string>
-    <string name="card_appearance_summary">Overall size, padding, length and position nudges</string>
+    <string name="card_appearance_summary">Icon scale and side spacing</string>
+    <string name="settings_group_status_bar">Status bar</string>
+    <string name="settings_group_trio">Trio</string>
+    <string name="settings_group_backup">Backup and restore</string>
+    <string name="status_bar_height_title">Status bar height</string>
+    <string name="status_bar_height_summary">0 dp follows the system. Range: −8 to +16 dp. The cutout and icons set the minimum.</string>
+    <string name="settings_trio_title">Merge style and size</string>
+    <string name="settings_trio_summary">Ring, capsule, outline, and component placement</string>
+    <string name="settings_trio_layout_title">Component placement</string>
+    <string name="settings_trio_layout_summary">Preview and arrange ring or capsule components on Home</string>
+    <string name="settings_export_summary">Save current configuration</string>
+    <string name="settings_import_summary">Restore configuration from a file</string>
+    <string name="settings_appearance_size">Size and spacing</string>
+    <string name="settings_appearance_icons">Status icons</string>
+    <string name="settings_appearance_display">Display</string>
 
 
     <string name="drawing_priority_empty_summary">Nothing placed here yet. Use "Add component" below.</string>
@@ -156,8 +170,8 @@
     <string name="mobile_type_outside">Outside the ring</string>
     <string name="show_out_type_title">Show out-of-ring network type</string>
     <string name="show_out_type_summary">Hide 5G/4G network type beside signal bars when disabled.</string>
-    <string name="drawing_part_shade">Shade panel</string>
-    <string name="card_shade_summary">Hide the power and bell buttons and put the lunar date and weather above the date.</string>
+    <string name="drawing_part_shade">Control Center</string>
+    <string name="card_shade_summary">Panel buttons, lunar date, and weather</string>
     <string name="shade_hide_power_title">Hide power</string>
     <string name="shade_hide_power_summary">Removes the control center\'s power button; long-pressing the hardware key still opens it.</string>
     <string name="shade_hide_bell_title">Hide bell</string>

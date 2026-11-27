@@ -95,6 +95,7 @@ class StatusAppearance(c: ModuleSettings) {
     @JvmField val networkSpeedScale: Int = c.networkSpeedScale
     @JvmField val networkSpeedPosition: Int = c.networkSpeedPosition
     @JvmField val statusIconScale: Float = c.statusIconScale / 100f
+    val statusBarHeightOffset: Int = if (enabled) c.statusBarHeightOffset else Prefs.DEF_STATUS_BAR_HEIGHT_OFFSET
     @JvmField val statusLeftIconSpacing: Int = c.statusLeftIconSpacing
     @JvmField val statusRightIconSpacing: Int = c.statusRightIconSpacing
 

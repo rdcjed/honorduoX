@@ -581,7 +581,7 @@ internal object RingRenderer {
     private fun drawRingFlankWifi(
         c: Canvas, wifiLevel: Int, foreground: Int, a: StatusAppearance, isLeft: Boolean,
     ) {
-        val fg = WifiIconRenderer.color(a.wifiIconColor) ?: foreground
+        val fg = WifiIconRenderer.color(a.wifiIconColor, a, foreground) ?: foreground
         val cx = IconGeometry.B_CX
         val cy = IconGeometry.B_CY
         val inactive = withAlpha(fg, a.trackAlpha)
@@ -950,7 +950,7 @@ internal object RingRenderer {
     private val WIFI_STYLE_PAINT = Paint(Paint.ANTI_ALIAS_FLAG)
 
     internal fun drawWifiArcs(c: Canvas, level: Int, foreground: Int, a: StatusAppearance) {
-        val fg = WifiIconRenderer.color(a.wifiIconColor) ?: foreground
+        val fg = WifiIconRenderer.color(a.wifiIconColor, a, foreground) ?: foreground
         if (a.wifiStyleSwitch || a.wifiIconStyle != Prefs.WIFI_STYLE_ORIGINAL) {
             val halfWidth = IconGeometry.W_INK_W / 2f
             val halfHeight = IconGeometry.W_INK_H / 2f

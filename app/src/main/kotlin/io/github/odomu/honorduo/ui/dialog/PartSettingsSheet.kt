@@ -71,6 +71,7 @@ internal fun PartSettingsSheet(
     onResetColors: () -> Unit,
     onDismiss: () -> Unit,
     onDismissFinished: () -> Unit,
+    onOpenTrioLayout: (() -> Unit)? = null,
     preview: (@Composable () -> Unit)? = null,
     ringSettings: ModuleSettings = settings,
 ) {
@@ -117,6 +118,14 @@ internal fun PartSettingsSheet(
                     if (compact) preview?.invoke()
                     controls.filterNot { it == ContentControl.WifiStyleSwitch }.forEach { control ->
                         ContentControlRow(control, settings, update, ringSettings)
+                    }
+                    if (onOpenTrioLayout != null) {
+                        ArrowPreference(
+                            title = stringResource(R.string.settings_trio_layout_title),
+                            summary = stringResource(R.string.settings_trio_layout_summary),
+                            insideMargin = SettingsItemMargin,
+                            onClick = onOpenTrioLayout,
+                        )
                     }
                     if (rows.isEmpty() && colors.isEmpty() && controls.isEmpty()) {
                         Text(

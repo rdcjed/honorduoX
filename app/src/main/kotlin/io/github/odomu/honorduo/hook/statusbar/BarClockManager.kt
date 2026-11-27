@@ -15,6 +15,7 @@ import android.widget.TextView
 import io.github.libxposed.api.XposedModule
 import io.github.odomu.honorduo.hook.core.Refl
 import io.github.odomu.honorduo.hook.core.SystemUiHook
+import io.github.odomu.honorduo.hook.core.StatusBarHeightHook
 import io.github.odomu.honorduo.hook.tracker.BarVisibility
 import io.github.odomu.honorduo.hook.tracker.ScreenStateTracker
 import io.github.odomu.honorduo.hook.tracker.WeatherManager
@@ -248,6 +249,7 @@ internal object BarClockManager {
 
     @SuppressLint("InternalInsetResource")
     private fun barHeight(view: View): Int {
+        StatusBarHeightHook.currentHeight(view.context)?.let { return it }
         val id = Refl.resId(view.resources, "status_bar_height", "dimen", "android")
         return if (id != 0) view.resources.getDimensionPixelSize(id) else view.height
     }

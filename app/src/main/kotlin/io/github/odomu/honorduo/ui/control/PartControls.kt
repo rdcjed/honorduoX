@@ -28,7 +28,8 @@ import io.github.odomu.honorduo.ui.render.IconZones
  * it opens is titled with it.
  */
 internal enum class SettingsPart(val part: IconZones.Part?, val labelRes: Int) {
-    Appearance(null, R.string.drawing_part_appearance),
+    Appearance(null, R.string.section_appearance),
+    Trio(null, R.string.settings_group_trio),
     Battery(null, R.string.drawing_part_battery),
     Readouts(null, R.string.perf_pair_title),
     Wifi(IconZones.Part.WIFI, R.string.show_wifi_title),
@@ -160,6 +161,19 @@ internal fun geometrySliders(): List<SliderSpec> {
     val type = IconZones.Part.TYPE
     val bolt = IconZones.Part.BOLT
     return listOf(
+        SliderSpec(
+            group = GeometryGroup.Layout,
+            part = null,
+            min = Prefs.MIN_STATUS_BAR_HEIGHT_OFFSET,
+            max = Prefs.MAX_STATUS_BAR_HEIGHT_OFFSET,
+            read = { it.statusBarHeightOffset },
+            write = { r, v -> r.setStatusBarHeightOffset(v) },
+            titleRes = { R.string.status_bar_height_title },
+            summaryRes = { R.string.status_bar_height_summary },
+            enabled = { true },
+            suffix = "dp",
+            editorOwner = SettingsPart.Appearance,
+        ),
         SliderSpec(
             group = GeometryGroup.Scale,
             part = null,
@@ -302,6 +316,7 @@ internal fun geometrySliders(): List<SliderSpec> {
             min = Prefs.MIN_GLYPH_SCALE,
             max = Prefs.MAX_GLYPH_SCALE,
             read = { it.glyphScale },
+            editorOwner = SettingsPart.Trio,
             write = { r, v -> r.setGlyphScale(v) },
             titleRes = { R.string.glyph_scale_title },
             summaryRes = { R.string.glyph_scale_summary },
@@ -371,7 +386,7 @@ internal fun geometrySliders(): List<SliderSpec> {
             min = Prefs.MIN_RING_STROKE,
             max = Prefs.MAX_RING_STROKE,
             read = { it.ringStroke },
-            editorOwner = SettingsPart.Appearance,
+            editorOwner = SettingsPart.Trio,
             write = { r, v -> r.setRingStroke(v) },
             // One stroke setting, two names: the rectangle spends it on the bar's
             // thickness, the ring on the outline's width.
@@ -613,6 +628,7 @@ internal fun geometrySliders(): List<SliderSpec> {
             min = Prefs.MIN_CAP_GAP,
             max = Prefs.MAX_CAP_GAP,
             read = { it.capGap },
+            editorOwner = SettingsPart.Trio,
             write = { r, v -> r.setCapGap(v) },
             titleRes = { R.string.cap_gap_title },
             summaryRes = { R.string.cap_gap_summary },
@@ -626,6 +642,7 @@ internal fun geometrySliders(): List<SliderSpec> {
             min = Prefs.MIN_CAPSULE_LENGTH,
             max = Prefs.MAX_CAPSULE_LENGTH,
             read = { it.capsuleLength },
+            editorOwner = SettingsPart.Trio,
             write = { r, v -> r.setCapsuleLength(v) },
             titleRes = { R.string.capsule_length_title },
             summaryRes = { R.string.capsule_length_summary },
@@ -637,6 +654,7 @@ internal fun geometrySliders(): List<SliderSpec> {
             min = Prefs.MIN_CAPSULE_NUDGE_X,
             max = Prefs.MAX_CAPSULE_NUDGE_X,
             read = { it.capsuleLeftDx },
+            editorOwner = SettingsPart.Trio,
             write = { r, v -> r.setCapsuleLeftDx(v) },
             titleRes = { R.string.capsule_nudge_left_dx_title },
             summaryRes = { R.string.capsule_nudge_left_dx_summary },
@@ -648,6 +666,7 @@ internal fun geometrySliders(): List<SliderSpec> {
             min = Prefs.MIN_CAPSULE_NUDGE_Y,
             max = Prefs.MAX_CAPSULE_NUDGE_Y,
             read = { it.capsuleLeftDy },
+            editorOwner = SettingsPart.Trio,
             write = { r, v -> r.setCapsuleLeftDy(v) },
             titleRes = { R.string.capsule_nudge_left_dy_title },
             summaryRes = { R.string.capsule_nudge_left_dy_summary },
@@ -659,6 +678,7 @@ internal fun geometrySliders(): List<SliderSpec> {
             min = Prefs.MIN_CAPSULE_NUDGE_X,
             max = Prefs.MAX_CAPSULE_NUDGE_X,
             read = { it.capsuleRightDx },
+            editorOwner = SettingsPart.Trio,
             write = { r, v -> r.setCapsuleRightDx(v) },
             titleRes = { R.string.capsule_nudge_right_dx_title },
             summaryRes = { R.string.capsule_nudge_right_dx_summary },
@@ -670,6 +690,7 @@ internal fun geometrySliders(): List<SliderSpec> {
             min = Prefs.MIN_CAPSULE_NUDGE_Y,
             max = Prefs.MAX_CAPSULE_NUDGE_Y,
             read = { it.capsuleRightDy },
+            editorOwner = SettingsPart.Trio,
             write = { r, v -> r.setCapsuleRightDy(v) },
             titleRes = { R.string.capsule_nudge_right_dy_title },
             summaryRes = { R.string.capsule_nudge_right_dy_summary },
@@ -681,7 +702,7 @@ internal fun geometrySliders(): List<SliderSpec> {
             min = Prefs.MIN_RING_SPACING_X,
             max = Prefs.MAX_RING_SPACING_X,
             read = { it.ringSpacingX },
-            editorOwner = SettingsPart.Appearance,
+            editorOwner = SettingsPart.Trio,
             write = { r, v -> r.setRingSpacingX(v) },
             titleRes = { R.string.ring_spacing_x_title },
             summaryRes = { R.string.ring_spacing_x_summary },
@@ -694,7 +715,7 @@ internal fun geometrySliders(): List<SliderSpec> {
             min = Prefs.MIN_RING_SPACING_Y,
             max = Prefs.MAX_RING_SPACING_Y,
             read = { it.ringSpacingY },
-            editorOwner = SettingsPart.Appearance,
+            editorOwner = SettingsPart.Trio,
             write = { r, v -> r.setRingSpacingY(v) },
             titleRes = { R.string.ring_spacing_y_title },
             summaryRes = { R.string.ring_spacing_y_summary },
@@ -707,7 +728,7 @@ internal fun geometrySliders(): List<SliderSpec> {
             min = Prefs.MIN_TRACK_ALPHA,
             max = Prefs.MAX_TRACK_ALPHA,
             read = { it.trackAlpha },
-            editorOwner = SettingsPart.Appearance,
+            editorOwner = SettingsPart.Trio,
             write = { r, v -> r.setTrackAlpha(v) },
             titleRes = { R.string.track_alpha_title },
             summaryRes = { R.string.track_alpha_summary },
@@ -721,7 +742,8 @@ internal fun slidersForPart(part: IconZones.Part): List<SliderSpec> =
     geometrySliders().filter { it.part == part }
 
 internal fun slidersForEditor(part: SettingsPart): List<SliderSpec> = when (part) {
-    SettingsPart.Appearance, SettingsPart.Battery, SettingsPart.Readouts ->
+    SettingsPart.Appearance, SettingsPart.Trio,
+    SettingsPart.Battery, SettingsPart.Readouts ->
         geometrySliders().filter {
             (it.part == null && it.editorOwner == part) ||
                 (part == SettingsPart.Battery &&

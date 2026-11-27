@@ -8,16 +8,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,9 +50,6 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.roundToInt
 
 val SettingsItemMargin = PaddingValues(horizontal = 16.dp, vertical = 13.dp)
-
-/** Height of one settings tile: icon, title, and a two-line summary, plus the padding. */
-private val TILE_HEIGHT = 104.dp
 
 internal val ActivatedContainer = Color(0xFFE4F9E5)
 internal val ActivatedContent = Color(0xFF101010)
@@ -93,20 +91,6 @@ fun SectionList(
     }
 }
 
-/**
- * One entry of the settings grid: the same "opens a sheet" idea as [SettingPreviewCard],
- * laid out for two per row.
- *
- * Vertical, not the row layout the full-width card uses: half a phone's width cannot hold an
- * icon, a title and a summary side by side without the summary becoming two words and an
- * ellipsis. So the icon sits on top, the title under it, and the summary is clamped to two
- * lines - the tile states what the sheet is about and nothing more, which is what keeps a
- * grid readable.
- *
- * A fixed height, because the tiles in a row must end level and every summary is clamped to
- * the same two lines: intrinsic sizing would make the row's depth depend on the longest string
- * in this build, and a fixed box is what lets the grid read as a grid.
- */
 @Composable
 fun SettingTile(
     title: String,
@@ -114,35 +98,40 @@ fun SettingTile(
     icon: ImageVector,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    showChevron: Boolean = false,
 ) {
-    Card(modifier = modifier.height(TILE_HEIGHT), onClick = onClick) {
-        Column(
+    Card(modifier = modifier, onClick = onClick) {
+        Row(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+                .fillMaxWidth()
+                .heightIn(min = 66.dp)
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MiuixTheme.colorScheme.primary,
-                modifier = Modifier.size(22.dp),
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = title,
-                style = MiuixTheme.textStyles.body1,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.height(3.dp))
-            Text(
-                text = summary,
-                style = MiuixTheme.textStyles.footnote2,
-                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Box(
+                modifier = Modifier.size(30.dp).clip(RoundedCornerShape(9.dp))
+                    .background(MiuixTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(icon, contentDescription = null, modifier = Modifier.size(17.dp),
+                    tint = MiuixTheme.colorScheme.primary)
+            }
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MiuixTheme.textStyles.body2, fontWeight = FontWeight.SemiBold,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(summary, style = MiuixTheme.textStyles.footnote2,
+                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+            if (showChevron) {
+                Icon(
+                    ImageVector.vectorResource(R.drawable.ic_lucide_chevron_right),
+                    contentDescription = null,
+                    modifier = Modifier.size(15.dp),
+                    tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                )
+            }
         }
     }
 }

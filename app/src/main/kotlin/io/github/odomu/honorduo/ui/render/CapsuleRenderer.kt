@@ -1427,7 +1427,7 @@ internal object CapsuleRenderer {
         c: Canvas, stroke: Float, wifiLevel: Int, foreground: Int, a: StatusAppearance,
         left: Float, right: Float, isLeft: Boolean,
     ) {
-        val fg = WifiIconRenderer.color(a.wifiIconColor) ?: foreground
+        val fg = WifiIconRenderer.color(a.wifiIconColor, a, foreground) ?: foreground
         val capR = CapsuleGeometry.CAP_RADIUS
         val capCy = (CapsuleGeometry.CAP_TOP + CapsuleGeometry.CAP_BOTTOM) * 0.5f
         val arcCenterCx = if (isLeft) left + capR else right - capR

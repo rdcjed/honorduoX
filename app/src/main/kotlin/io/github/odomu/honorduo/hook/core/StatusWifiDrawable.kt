@@ -32,7 +32,8 @@ internal class StatusWifiDrawable(
 
     override fun draw(canvas: Canvas) {
         val a = ModuleConfig.appearance()
-        val fixed = if (a.enabled) WifiIconRenderer.color(a.wifiIconColor) else null
+        val foreground = tint?.getColorForState(state, tint?.defaultColor ?: Color.WHITE) ?: Color.WHITE
+        val fixed = if (a.enabled) WifiIconRenderer.color(a.wifiIconColor, a, foreground) else null
         box.set(bounds)
         if (a.enabled && (a.wifiIconStyle != Prefs.WIFI_STYLE_ORIGINAL || a.wifiStyleSwitch)) {
             val scale = a.wifiScaleFactor()
@@ -42,7 +43,7 @@ internal class StatusWifiDrawable(
                 defaultFit + (1f - defaultFit) * (scale - 1f) / 0.6f
             val inset = (1f - fit) / 2f
             box.inset(box.width() * inset, box.height() * inset)
-            val color = fixed ?: tint?.getColorForState(state, tint?.defaultColor ?: Color.WHITE) ?: Color.WHITE
+            val color = fixed ?: foreground
             ink.colorFilter = if (fixed == null) filter else null
             val inkColor = (color and 0x00ffffff) or ((Color.alpha(color) * opacity / 255) shl 24)
             WifiIconRenderer.draw(canvas, box, a.wifiIconStyle, a.wifiStyleSwitch, level,

@@ -226,6 +226,10 @@ object Prefs {
     const val DEF_STATUS_ICON_SCALE = 100
     const val MIN_STATUS_ICON_SCALE = 50
     const val MAX_STATUS_ICON_SCALE = 120
+    const val KEY_STATUS_BAR_HEIGHT_OFFSET = "status_bar_height_offset"
+    const val DEF_STATUS_BAR_HEIGHT_OFFSET = 0
+    const val MIN_STATUS_BAR_HEIGHT_OFFSET = -8
+    const val MAX_STATUS_BAR_HEIGHT_OFFSET = 16
     const val KEY_STATUS_LEFT_ICON_SPACING = "status_left_icon_spacing"
     const val KEY_STATUS_RIGHT_ICON_SPACING = "status_icon_spacing"
     const val DEF_STATUS_ICON_SPACING = 0
@@ -1398,7 +1402,9 @@ object Prefs {
     const val DEF_ROLE_COLORS_TEMP = false
     const val DEF_COLOR_CRITICAL_ON_DARK = 0xFFFF3B30.toInt()
     const val DEF_COLOR_CRITICAL_ON_LIGHT = 0xFFFF3B30.toInt()
-    const val DEF_COLOR_CHARGING_ON_DARK = 0xFF34C759.toInt()
+    // MagicOS battery_level_charge_mode_new_color from the device's SystemUI.
+    const val COLOR_BATTERY_CHARGING = 0xFF35C759.toInt()
+    const val DEF_COLOR_CHARGING_ON_DARK = COLOR_BATTERY_CHARGING
     const val DEF_COLOR_CHARGING_ON_LIGHT = 0xFF1F8F3D.toInt()
     const val DEF_COLOR_LOW_ON_DARK = 0xFFF2B900.toInt()
     const val DEF_COLOR_LOW_ON_LIGHT = 0xFFC99700.toInt()

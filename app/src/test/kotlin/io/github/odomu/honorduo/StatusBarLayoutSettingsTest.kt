@@ -1,6 +1,7 @@
 package io.github.odomu.honorduo
 
 import android.content.SharedPreferences
+import io.github.odomu.honorduo.hook.core.StatusBarHeightHook
 import io.github.odomu.honorduo.model.ModuleSettings
 import io.github.odomu.honorduo.model.Prefs
 import io.github.odomu.honorduo.model.StatusAppearance
@@ -11,6 +12,26 @@ import org.junit.Test
 import java.lang.reflect.Proxy
 
 class StatusBarLayoutSettingsTest {
+    @Test
+    fun heightOffsetDefaultsToSystemAndFollowsMasterSwitch() {
+        val settings = ModuleSettings.from(preferences()).apply { enabled = true }
+        assertEquals(0, StatusAppearance.of(settings).statusBarHeightOffset)
+        val small = ModuleSettings.from(preferences(Prefs.KEY_STATUS_BAR_HEIGHT_OFFSET to -100))
+        assertTrue(settings.applyKeyFrom(small, Prefs.KEY_STATUS_BAR_HEIGHT_OFFSET))
+        assertEquals(-8, StatusAppearance.of(settings.copy()).statusBarHeightOffset)
+        settings.enabled = false
+        assertEquals(0, StatusAppearance.of(settings).statusBarHeightOffset)
+        val large = ModuleSettings.from(preferences(Prefs.KEY_STATUS_BAR_HEIGHT_OFFSET to 100))
+        assertEquals(16, large.statusBarHeightOffset)
+    }
+
+    @Test
+    fun reducingHeightRespectsTheCutoutAndNeverEnlargesTheNativeBar() {
+        assertEquals(28, StatusBarHeightHook.constrainHeight(34, -8, 28))
+        assertEquals(34, StatusBarHeightHook.constrainHeight(34, -8, 36))
+        assertEquals(42, StatusBarHeightHook.constrainHeight(34, 8, 28))
+    }
+
     @Test
     fun legacySpacingIsRetainedOnTheRight() {
         val settings = ModuleSettings.from(preferences("status_icon_spacing" to -2))

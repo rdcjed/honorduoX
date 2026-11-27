@@ -32,6 +32,7 @@ import android.widget.TextView
 import androidx.annotation.RequiresApi
 import io.github.odomu.honorduo.hook.core.Refl
 import io.github.odomu.honorduo.hook.core.SystemUiHook
+import io.github.odomu.honorduo.hook.core.StatusBarHeightHook
 import io.github.odomu.honorduo.hook.statusbar.StatusBarRowManager.PERF_MIN_SIZE_RATIO
 import io.github.odomu.honorduo.hook.tracker.BarVisibility
 import io.github.odomu.honorduo.hook.tracker.ScreenStateTracker
@@ -251,6 +252,7 @@ internal object StatusBarRowManager {
     private fun measureKey(a: StatusAppearance): Int {
         var key = a.style
         key = key * 31 + a.glyphScale
+        key = key * 31 + a.statusBarHeightOffset
         key = key * 31 + a.ringSpacingX
         key = key * 31 + a.ringSpacingY
         key = key * 31 + (if (a.capsule) 1 else 0)
@@ -1250,6 +1252,7 @@ internal object StatusBarRowManager {
 
     @SuppressLint("InternalInsetResource")
     private fun barHeight(view: View): Int {
+        StatusBarHeightHook.currentHeight(view.context)?.let { return it }
         val res = view.resources
         val id = Refl.resId(res, "status_bar_height", "dimen", "android")
         return if (id > 0) res.getDimensionPixelSize(id) else view.height

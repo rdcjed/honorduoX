@@ -19,15 +19,12 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,14 +37,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.odomu.honorduo.BuildConfig
@@ -71,7 +65,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.cos
 import kotlin.math.sin
 
-/** Scrolling brand header over a persistent, full-screen animated mesh. */
+/** App information and update actions over the animated background. */
 @Composable
 internal fun AboutPage(
     updater: AppUpdater,
@@ -84,26 +78,8 @@ internal fun AboutPage(
     val repoUrl = "https://github.com/${BuildConfig.REPO_SLUG}"
     val originalRepoUrl = "https://github.com/yixing233/HyperDuo"
     val hasRepo = BuildConfig.REPO_SLUG.isNotBlank()
-    val configuration = LocalConfiguration.current
     val isDark = isSystemInDarkTheme()
     val navPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-
-    val screenHeightDp = configuration.screenHeightDp.dp
-    val heroAreaHeight = (screenHeightDp * 0.58f).coerceIn(420.dp, 560.dp)
-
-    val scrollOffset by remember {
-        derivedStateOf {
-            val idx = listState.firstVisibleItemIndex
-            val off = listState.firstVisibleItemScrollOffset
-            if (idx > 0) 800f else off.toFloat()
-        }
-    }
-
-    val scrollProgress by remember {
-        derivedStateOf {
-            (scrollOffset / 320f).coerceIn(0f, 1f)
-        }
-    }
 
     val state = updater.state
     val updateSummary: String = when (state) {
@@ -137,106 +113,12 @@ internal fun AboutPage(
             Box(modifier = Modifier.fillMaxSize().background(fallbackBrush))
         }
 
-        // Dedicated Top Hero Area with generous top padding from status bar
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(heroAreaHeight)
-                .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 84.dp)
-                .graphicsLayer {
-                    translationY = -scrollOffset * 0.45f
-                    alpha = (1f - (scrollProgress * 1.35f)).coerceIn(0f, 1f)
-                    scaleX = 1f - (scrollProgress * 0.08f)
-                    scaleY = 1f - (scrollProgress * 0.08f)
-                },
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            val glyphColor = MiuixTheme.colorScheme.onSurface
-            Canvas(modifier = Modifier.size(92.dp)) {
-                val unit = size.minDimension / 120f
-                val center = Offset(size.width / 2f, size.height / 2f)
-
-                // 1. Outer battery ring
-                val ringR = 46f * unit
-                drawArc(
-                    color = glyphColor,
-                    startAngle = 145f,
-                    sweepAngle = 250f,
-                    useCenter = false,
-                    topLeft = center - Offset(ringR, ringR),
-                    size = Size(ringR * 2f, ringR * 2f),
-                    style = Stroke(width = 5.6f * unit, cap = StrokeCap.Round),
-                )
-
-                // 2. Four bottom cellular signal dots
-                val dotRadius = 3.6f * unit
-                val dotAngles = intArrayOf(58, 79, 101, 122)
-                for (deg in dotAngles) {
-                    val rad = Math.toRadians(deg.toDouble())
-                    val x = center.x + (cos(rad) * ringR).toFloat()
-                    val y = center.y + (sin(rad) * ringR).toFloat()
-                    drawCircle(color = glyphColor, radius = dotRadius, center = Offset(x, y))
-                }
-
-                // 3. Inner Wi-Fi glyph optically centered against the ring
-                val wifiCenter = Offset(center.x, center.y + 10.5f * unit)
-                fun wifiArc(r: Float, strokeWidth: Float) {
-                    val radius = r * unit
-                    drawArc(
-                        color = glyphColor,
-                        startAngle = 222f,
-                        sweepAngle = 96f,
-                        useCenter = false,
-                        topLeft = wifiCenter - Offset(radius, radius),
-                        size = Size(radius * 2f, radius * 2f),
-                        style = Stroke(width = strokeWidth * unit, cap = StrokeCap.Round),
-                    )
-                }
-
-                wifiArc(25f, 5.0f)
-                wifiArc(15f, 5.0f)
-                drawCircle(color = glyphColor, radius = 3.2f * unit, center = wifiCenter)
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            Text(
-                text = stringResource(R.string.app_name),
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                color = MiuixTheme.colorScheme.onSurface,
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Text(
-                text = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Normal,
-                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = stringResource(R.string.module_description),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Normal,
-                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 36.dp),
-                lineHeight = 18.sp,
-            )
-        }
-
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
                 SmallTopAppBar(
                     title = stringResource(R.string.about_title),
-                    titleColor = MiuixTheme.colorScheme.onSurface.copy(alpha = scrollProgress),
                     scrollBehavior = scrollBehavior,
-                    defaultWindowInsetsPadding = false,
                     color = Color.Transparent,
                     navigationIcon = {
                         IconButton(
@@ -261,13 +143,10 @@ internal fun AboutPage(
                     start = 16.dp,
                     end = 16.dp,
                     top = innerPadding.calculateTopPadding(),
-                    bottom = navPadding + 40.dp,
+                    bottom = navPadding + 12.dp,
                 ),
             ) {
-                // Reserve space for the hero area
-                item(key = "heroSpacer") {
-                    Spacer(modifier = Modifier.height(heroAreaHeight - 32.dp))
-                }
+                item(key = "aboutBrand") { AboutBrandHeader() }
 
                 // Consolidated actions and settings card
                 item(key = "aboutActionGroup") {
@@ -303,9 +182,6 @@ internal fun AboutPage(
                     }
                 }
 
-                item(key = "bottomPadding") {
-                    Spacer(modifier = Modifier.height(60.dp))
-                }
             }
             ReleaseNotesDialog(
                 show = showReleaseNotes,
@@ -322,6 +198,82 @@ internal fun AboutPage(
 }
 
 @Composable
+private fun AboutBrandHeader() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 10.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val glyphColor = MiuixTheme.colorScheme.onSurface
+        Canvas(modifier = Modifier.size(56.dp)) {
+            val unit = size.minDimension / 120f
+            val center = Offset(size.width / 2f, size.height / 2f)
+
+            // 1. Outer battery ring
+            val ringR = 46f * unit
+            drawArc(
+                color = glyphColor,
+                startAngle = 145f,
+                sweepAngle = 250f,
+                useCenter = false,
+                topLeft = center - Offset(ringR, ringR),
+                size = Size(ringR * 2f, ringR * 2f),
+                style = Stroke(width = 5.6f * unit, cap = StrokeCap.Round),
+            )
+
+            // 2. Four bottom cellular signal dots
+            val dotRadius = 3.6f * unit
+            val dotAngles = intArrayOf(58, 79, 101, 122)
+            for (deg in dotAngles) {
+                val rad = Math.toRadians(deg.toDouble())
+                val x = center.x + (cos(rad) * ringR).toFloat()
+                val y = center.y + (sin(rad) * ringR).toFloat()
+                drawCircle(color = glyphColor, radius = dotRadius, center = Offset(x, y))
+            }
+
+            // 3. Inner Wi-Fi glyph optically centered against the ring
+            val wifiCenter = Offset(center.x, center.y + 10.5f * unit)
+            fun wifiArc(r: Float, strokeWidth: Float) {
+                val radius = r * unit
+                drawArc(
+                    color = glyphColor,
+                    startAngle = 222f,
+                    sweepAngle = 96f,
+                    useCenter = false,
+                    topLeft = wifiCenter - Offset(radius, radius),
+                    size = Size(radius * 2f, radius * 2f),
+                    style = Stroke(width = strokeWidth * unit, cap = StrokeCap.Round),
+                )
+            }
+
+            wifiArc(25f, 5.0f)
+            wifiArc(15f, 5.0f)
+            drawCircle(color = glyphColor, radius = 3.2f * unit, center = wifiCenter)
+        }
+
+        Column(Modifier.weight(1f).padding(start = 10.dp)) {
+            Text(
+                text = stringResource(R.string.app_name),
+                fontSize = 23.sp,
+                fontWeight = FontWeight.Bold,
+                color = MiuixTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                style = MiuixTheme.textStyles.footnote1,
+                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+            )
+            Text(
+                text = stringResource(R.string.module_description),
+                style = MiuixTheme.textStyles.footnote1,
+                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+            )
+        }
+    }
+}
+
+@Composable
 private fun AboutAction(
     title: String,
     summary: String? = null,
@@ -330,11 +282,11 @@ private fun AboutAction(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 14.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, fontSize = 17.sp, color = MiuixTheme.colorScheme.onSurface)
+            Text(title, style = MiuixTheme.textStyles.body2, color = MiuixTheme.colorScheme.onSurface)
             if (summary != null) {
                 Spacer(Modifier.size(2.dp))
                 Text(

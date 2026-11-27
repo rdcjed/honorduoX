@@ -201,6 +201,8 @@ private data class ZoneSelection(val zone: IconZones.Zone, val part: IconZones.P
  */
 internal fun LazyListScope.drawingTab(
     settings: ModuleSettings,
+    showOutside: Boolean,
+    onShowOutside: (Boolean) -> Unit,
     update: ((SettingsStore) -> Unit) -> Unit,
     onEditColor: (RoleColor) -> Unit,
     onResetColors: () -> Unit,
@@ -216,6 +218,8 @@ internal fun LazyListScope.drawingTab(
     item {
         DrawingEditorCard(
             settings = settings,
+            showOutside = showOutside,
+            onShowOutside = onShowOutside,
             update = update,
             onEditColor = onEditColor,
             onResetColors = onResetColors,
@@ -235,6 +239,8 @@ internal fun LazyListScope.drawingTab(
 @Composable
 private fun DrawingEditorCard(
     settings: ModuleSettings,
+    showOutside: Boolean,
+    onShowOutside: (Boolean) -> Unit,
     update: ((SettingsStore) -> Unit) -> Unit,
     onEditColor: (RoleColor) -> Unit,
     onResetColors: () -> Unit,
@@ -252,7 +258,6 @@ private fun DrawingEditorCard(
     var pressed by remember { mutableStateOf<IconZones.Zone?>(null) }
     var scene by rememberSaveable { mutableStateOf(PreviewScene.Normal) }
     var previewTheme by rememberSaveable { mutableIntStateOf(0) }
-    var showOutside by rememberSaveable { mutableStateOf(false) }
     var lastSelection by remember { mutableStateOf<ZoneSelection?>(null) }
 
     val appearance = StatusAppearance.of(settings)
@@ -309,9 +314,9 @@ private fun DrawingEditorCard(
                 dark = dark,
                 snapshotForStyle = snapshotForStyle,
                 showOutside = showOutside,
-                onSelectOutside = { showOutside = true },
+                onSelectOutside = { onShowOutside(true) },
                 onSelect = { style ->
-                    showOutside = false
+                    onShowOutside(false)
                     lastSelection = null
                     if (style != settings.trioStyle) update { it.setTrioStyle(style) }
                 },
@@ -374,7 +379,7 @@ private fun DrawingEditorCard(
                         }
                     },
                     onEditBattery = { editing = SettingsPart.Battery },
-                    onEditAppearance = { editing = SettingsPart.Appearance },
+                    onEditAppearance = { editing = SettingsPart.Trio },
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                 )
 
@@ -569,7 +574,6 @@ private fun DrawingSection(
 }
 
 private fun drawingPartLabel(part: SettingsPart): Int = when (part) {
-    SettingsPart.Appearance -> R.string.drawing_part_appearance
     SettingsPart.Readouts -> R.string.drawing_part_readouts
     else -> part.part?.let(::occupantLabelRes) ?: part.labelRes
 }

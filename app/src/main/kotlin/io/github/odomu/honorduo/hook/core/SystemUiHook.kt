@@ -65,6 +65,8 @@ internal object SystemUiHook {
 
         var hooked = 0
         hooked += SystemBarHook.install(module, cl)
+        hooked += StatusBarHeightHook.install(module, cl)
+        StatusBarHeightHook.onConfigChanged(ModuleConfig.appearance())
         hooked += SignalIconHook.install(module, cl)
         hooked += StatusBarIconHook.install(module, cl)
         hooked += NotifCenterHook.install(module, cl)
@@ -88,6 +90,7 @@ internal object SystemUiHook {
         if (debugLog()) {
             log(LOG_INFO, "config changed, rows=${StatusBarRowManager.rowsCount()} enabled=${a.glyph} style=${a.style}")
         }
+        StatusBarHeightHook.onConfigChanged(a)
         StatusBarRowManager.syncAll(a)
         StatusBarIconManager.applyIconVisibility(a)
         NetworkSpeedHook.updateConfig()
