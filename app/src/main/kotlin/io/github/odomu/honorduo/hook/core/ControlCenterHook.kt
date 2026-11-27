@@ -12,10 +12,8 @@ package io.github.odomu.honorduo.hook.core
 
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
 import io.github.libxposed.api.XposedModule
 import io.github.odomu.honorduo.hook.tracker.HiddenViews
-import io.github.odomu.honorduo.hook.tracker.ControlCenterPanelScale
 import io.github.odomu.honorduo.hook.tracker.SliderPress
 import io.github.odomu.honorduo.model.StatusAppearance
 
@@ -39,56 +37,7 @@ internal object ControlCenterHook {
         n += hookPowerButton(module, cl)
         n += hookVolumeSlider(module, cl)
         n += hookSwitcher(module, cl)
-        n += hookIconSize(module, cl)
-        n += hookPanelState(module, cl)
-        n += hookPanelViewport(module, cl)
         return n
-    }
-
-    private fun hookIconSize(module: XposedModule, cl: ClassLoader): Int {
-        val container = Refl.cls("com.android.systemui.controllercenter.HnControlCenterContainer", cl) ?: return 0
-        val layout = Refl.methodNamed(container, "onLayout", 5) ?: return 0
-        return SystemUiHook.hook(module, layout, "honorduo-cc-panel-size") { chain ->
-            val result = chain.proceed()
-            val view = chain.thisObject as? ViewGroup
-            if (view != null) {
-                val editing = Refl.getBool(Refl.field(view.javaClass, "isEditMode"), view, false)
-                var parent = view.parent
-                while (parent is View) {
-                    if (parent.javaClass.name == "com.android.systemui.statusbar.phone.HnColumeContainer") {
-                        val expanded = Refl.getBool(Refl.field(parent.javaClass, "isControlCenterExpand"), parent, false)
-                        ControlCenterPanelScale.register(parent, view, editing, expanded)
-                        break
-                    }
-                    parent = parent.parent
-                }
-            }
-            result
-        }
-    }
-
-    private fun hookPanelState(module: XposedModule, cl: ClassLoader): Int {
-        val listener = Refl.cls("com.android.systemui.statusbar.phone.HnColumeContainer" + '$' + "mControlCenterExpandListener" + '$' + "1", cl) ?: return 0
-        return SystemUiHook.hook(module, Refl.methodNamed(listener, "onControlCenterPanelChange", 1), "honorduo-cc-panel-state") { chain ->
-            val result = chain.proceed()
-            val self = chain.thisObject
-            val panel = self?.let { Refl.get(Refl.field(it.javaClass, "this" + '$' + "0"), it) } as? View
-            if (panel != null) ControlCenterPanelScale.setExpanded(panel, chain.getArg(0) as Boolean)
-            result
-        }
-    }
-
-    private fun hookPanelViewport(module: XposedModule, cl: ClassLoader): Int {
-        val column = Refl.cls("com.android.systemui.statusbar.phone.HnColumeContainer", cl) ?: return 0
-        val measure = Refl.methodNamed(column, "onMeasure", 2) ?: return 0
-        return SystemUiHook.hook(module, measure, "honorduo-cc-viewport") { chain ->
-            val panel = chain.thisObject as? View
-            if (panel == null || !column.isInstance(panel)) chain.proceed() else {
-                val height = chain.getArg(1) as Int
-                val adjusted = ControlCenterPanelScale.heightMeasureSpec(panel, height)
-                if (adjusted == height) chain.proceed() else chain.proceed(arrayOf<Any>(chain.getArg(0), adjusted))
-            }
-        }
     }
 
     private fun hookPowerButton(module: XposedModule, cl: ClassLoader): Int {
@@ -144,6 +93,5 @@ internal object ControlCenterHook {
 
     fun onConfigChanged(a: StatusAppearance) {
         HiddenViews.applyAll(a)
-        ControlCenterPanelScale.applyAll(a.shadeIconScale)
     }
 }

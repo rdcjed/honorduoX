@@ -222,15 +222,6 @@ object Prefs {
     const val DEF_BATTERY_ICON_SCALE = 100
     const val MIN_BATTERY_ICON_SCALE = 50
     const val MAX_BATTERY_ICON_SCALE = 130
-    const val KEY_SHADE_ICON_SCALE = "shade_icon_scale"
-    const val DEF_SHADE_ICON_SCALE = 100
-    const val MIN_SHADE_ICON_SCALE = 50
-    const val MAX_SHADE_ICON_SCALE = 100
-    const val KEY_SHADE_NOTIFICATION_SCALE = "shade_notification_scale"
-    const val DEF_SHADE_NOTIFICATION_SCALE = 100
-    const val MIN_SHADE_NOTIFICATION_SCALE = 70
-    const val MAX_SHADE_NOTIFICATION_SCALE = 120
-
     const val KEY_STATUS_ICON_SCALE = "status_icon_scale"
     const val DEF_STATUS_ICON_SCALE = 100
     const val MIN_STATUS_ICON_SCALE = 50

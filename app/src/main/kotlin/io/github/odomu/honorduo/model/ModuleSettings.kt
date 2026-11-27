@@ -75,8 +75,6 @@ class ModuleSettings {
     var networkSpeedScale = Prefs.DEF_NETWORK_SPEED_SCALE
     var networkSpeedPosition = Prefs.NETWORK_SPEED_SYSTEM
     var statusIconScale = Prefs.DEF_STATUS_ICON_SCALE
-    var shadeIconScale = Prefs.DEF_SHADE_ICON_SCALE
-    var shadeNotificationScale = Prefs.DEF_SHADE_NOTIFICATION_SCALE
     var statusBarHeightOffset = Prefs.DEF_STATUS_BAR_HEIGHT_OFFSET
     var statusLeftIconSpacing = Prefs.DEF_STATUS_ICON_SPACING
     var statusRightIconSpacing = Prefs.DEF_STATUS_ICON_SPACING
@@ -499,8 +497,6 @@ class ModuleSettings {
             networkSpeedScale = Prefs.DEF_NETWORK_SPEED_SCALE
             networkSpeedPosition = Prefs.NETWORK_SPEED_SYSTEM
             statusIconScale = Prefs.DEF_STATUS_ICON_SCALE
-            shadeIconScale = Prefs.DEF_SHADE_ICON_SCALE
-            shadeNotificationScale = Prefs.DEF_SHADE_NOTIFICATION_SCALE
             statusBarHeightOffset = Prefs.DEF_STATUS_BAR_HEIGHT_OFFSET
             statusLeftIconSpacing = Prefs.DEF_STATUS_ICON_SPACING
             statusRightIconSpacing = Prefs.DEF_STATUS_ICON_SPACING
@@ -730,10 +726,6 @@ class ModuleSettings {
             s.replaceWifiIcon = p.getBoolean(Prefs.KEY_REPLACE_WIFI_ICON, Prefs.DEF_REPLACE_WIFI_ICON)
             s.statusIconScale = p.getInt(Prefs.KEY_STATUS_ICON_SCALE, Prefs.DEF_STATUS_ICON_SCALE)
                 .coerceIn(Prefs.MIN_STATUS_ICON_SCALE, Prefs.MAX_STATUS_ICON_SCALE)
-            s.shadeIconScale = p.getInt(Prefs.KEY_SHADE_ICON_SCALE, Prefs.DEF_SHADE_ICON_SCALE)
-                .coerceIn(Prefs.MIN_SHADE_ICON_SCALE, Prefs.MAX_SHADE_ICON_SCALE)
-            s.shadeNotificationScale = p.getInt(Prefs.KEY_SHADE_NOTIFICATION_SCALE, Prefs.DEF_SHADE_NOTIFICATION_SCALE)
-                .coerceIn(Prefs.MIN_SHADE_NOTIFICATION_SCALE, Prefs.MAX_SHADE_NOTIFICATION_SCALE)
             s.statusBarHeightOffset = p.getInt(Prefs.KEY_STATUS_BAR_HEIGHT_OFFSET, Prefs.DEF_STATUS_BAR_HEIGHT_OFFSET)
                 .coerceIn(Prefs.MIN_STATUS_BAR_HEIGHT_OFFSET, Prefs.MAX_STATUS_BAR_HEIGHT_OFFSET)
             s.statusLeftIconSpacing = p.getInt(Prefs.KEY_STATUS_LEFT_ICON_SPACING, Prefs.DEF_STATUS_ICON_SPACING)
@@ -1108,10 +1100,6 @@ class ModuleSettings {
             s.replaceWifiIcon = bundle.getBoolean(Prefs.KEY_REPLACE_WIFI_ICON, Prefs.DEF_REPLACE_WIFI_ICON)
             s.statusIconScale = bundle.getInt(Prefs.KEY_STATUS_ICON_SCALE, Prefs.DEF_STATUS_ICON_SCALE)
                 .coerceIn(Prefs.MIN_STATUS_ICON_SCALE, Prefs.MAX_STATUS_ICON_SCALE)
-            s.shadeIconScale = bundle.getInt(Prefs.KEY_SHADE_ICON_SCALE, Prefs.DEF_SHADE_ICON_SCALE)
-                .coerceIn(Prefs.MIN_SHADE_ICON_SCALE, Prefs.MAX_SHADE_ICON_SCALE)
-            s.shadeNotificationScale = bundle.getInt(Prefs.KEY_SHADE_NOTIFICATION_SCALE, Prefs.DEF_SHADE_NOTIFICATION_SCALE)
-                .coerceIn(Prefs.MIN_SHADE_NOTIFICATION_SCALE, Prefs.MAX_SHADE_NOTIFICATION_SCALE)
             s.statusBarHeightOffset = bundle.getInt(Prefs.KEY_STATUS_BAR_HEIGHT_OFFSET, Prefs.DEF_STATUS_BAR_HEIGHT_OFFSET)
                 .coerceIn(Prefs.MIN_STATUS_BAR_HEIGHT_OFFSET, Prefs.MAX_STATUS_BAR_HEIGHT_OFFSET)
             s.statusLeftIconSpacing = bundle.getInt(Prefs.KEY_STATUS_LEFT_ICON_SPACING, Prefs.DEF_STATUS_ICON_SPACING)
@@ -1635,8 +1623,6 @@ class ModuleSettings {
         s.networkSpeedScale = networkSpeedScale
         s.networkSpeedPosition = networkSpeedPosition
         s.statusIconScale = statusIconScale
-        s.shadeIconScale = shadeIconScale
-        s.shadeNotificationScale = shadeNotificationScale
         s.statusBarHeightOffset = statusBarHeightOffset
         s.statusLeftIconSpacing = statusLeftIconSpacing
         s.statusRightIconSpacing = statusRightIconSpacing
@@ -1841,8 +1827,6 @@ class ModuleSettings {
             Prefs.KEY_NETWORK_SPEED_SCALE -> networkSpeedScale = src.networkSpeedScale
             Prefs.KEY_NETWORK_SPEED_POSITION -> networkSpeedPosition = src.networkSpeedPosition
             Prefs.KEY_STATUS_ICON_SCALE -> statusIconScale = src.statusIconScale
-            Prefs.KEY_SHADE_ICON_SCALE -> shadeIconScale = src.shadeIconScale
-            Prefs.KEY_SHADE_NOTIFICATION_SCALE -> shadeNotificationScale = src.shadeNotificationScale
             Prefs.KEY_STATUS_BAR_HEIGHT_OFFSET -> statusBarHeightOffset = src.statusBarHeightOffset
             Prefs.KEY_STATUS_LEFT_ICON_SPACING -> statusLeftIconSpacing = src.statusLeftIconSpacing
             Prefs.KEY_STATUS_RIGHT_ICON_SPACING -> statusRightIconSpacing = src.statusRightIconSpacing
@@ -2016,8 +2000,6 @@ class ModuleSettings {
         putInt(Prefs.KEY_NETWORK_SPEED_SCALE, networkSpeedScale)
         putInt(Prefs.KEY_NETWORK_SPEED_POSITION, networkSpeedPosition)
         putInt(Prefs.KEY_STATUS_ICON_SCALE, statusIconScale)
-        putInt(Prefs.KEY_SHADE_ICON_SCALE, shadeIconScale)
-        putInt(Prefs.KEY_SHADE_NOTIFICATION_SCALE, shadeNotificationScale)
         putInt(Prefs.KEY_STATUS_BAR_HEIGHT_OFFSET, statusBarHeightOffset)
         putInt(Prefs.KEY_STATUS_LEFT_ICON_SPACING, statusLeftIconSpacing)
         putInt(Prefs.KEY_STATUS_RIGHT_ICON_SPACING, statusRightIconSpacing)
@@ -2190,8 +2172,6 @@ class ModuleSettings {
             showMobileIndicator == other.showMobileIndicator &&
             networkSpeedScale == other.networkSpeedScale && networkSpeedPosition == other.networkSpeedPosition &&
             statusIconScale == other.statusIconScale && statusBarHeightOffset == other.statusBarHeightOffset &&
-            shadeIconScale == other.shadeIconScale &&
-            shadeNotificationScale == other.shadeNotificationScale &&
             statusLeftIconSpacing == other.statusLeftIconSpacing && statusRightIconSpacing == other.statusRightIconSpacing &&
             wifiScale == other.wifiScale && valueCentred == other.valueCentred && valueSize == other.valueSize &&
             valueWeight == other.valueWeight && boltScale == other.boltScale && boltAnim == other.boltAnim &&
