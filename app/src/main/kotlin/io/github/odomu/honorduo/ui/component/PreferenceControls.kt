@@ -49,7 +49,7 @@ import top.yukonga.miuix.kmp.theme.ColorSchemeMode
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.roundToInt
 
-val SettingsItemMargin = PaddingValues(horizontal = 16.dp, vertical = 13.dp)
+val SettingsItemMargin = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
 
 internal val ActivatedContainer = Color(0xFFE4F9E5)
 internal val ActivatedContent = Color(0xFF101010)
@@ -118,7 +118,7 @@ fun SettingTile(
                     tint = MiuixTheme.colorScheme.primary)
             }
             Column(Modifier.weight(1f)) {
-                Text(title, style = MiuixTheme.textStyles.body2, fontWeight = FontWeight.SemiBold,
+                Text(title, style = MiuixTheme.textStyles.body1, fontWeight = FontWeight.SemiBold,
                     maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(summary, style = MiuixTheme.textStyles.footnote2,
                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
@@ -250,9 +250,9 @@ fun IntSlider(
             steps = ((max - min) / step - 1).coerceAtLeast(0),
             insideMargin = PaddingValues(
                 start = 16.dp,
-                top = 12.dp,
+                top = 7.dp,
                 end = if (hasReset) 48.dp else 16.dp,
-                bottom = 12.dp,
+                bottom = 7.dp,
             ),
         )
 
@@ -260,7 +260,7 @@ fun IntSlider(
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 12.dp, bottom = 14.dp)
+                    .padding(end = 12.dp, bottom = 9.dp)
                     .size(28.dp)
                     .clip(CircleShape)
                     .background(Color.Transparent),

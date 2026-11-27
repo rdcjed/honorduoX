@@ -211,8 +211,8 @@
     <string name="mobile_type_outside">环外</string>
     <string name="show_out_type_title">显示环外网络类型</string>
     <string name="show_out_type_summary">关闭后不在状态栏环外及堆叠信号上显示 5G/4G 等网络制式。</string>
-    <string name="drawing_part_shade">控制中心</string>
-    <string name="card_shade_summary">面板按钮、农历和天气显示</string>
+    <string name="drawing_part_shade">通知/控制中心</string>
+    <string name="card_shade_summary">图标与通知大小、面板按钮和天气</string>
     <string name="shade_hide_power_title">隐藏关机</string>
     <string name="shade_hide_power_summary">收起控制中心（右侧下拉）右上角的电源按钮，关机仍可长按物理电源键。</string>
     <string name="shade_hide_bell_title">隐藏铃铛</string>
@@ -613,4 +613,8 @@
     <string name="readout_position_left">状态栏左侧</string>
     <string name="readout_position_right">状态栏右侧</string>
     <string name="drawing_outside_empty">暂无显示中的环外组件，可在「设置」中开启。</string>
+    <string name="shade_icon_scale_title">控制中心整体大小</string>
+    <string name="shade_icon_scale_summary" formatted="false">整个下拉控制中心等比例缩放，保留原有布局；100% 为系统默认</string>
+    <string name="shade_notification_scale_title">通知卡片大小</string>
+    <string name="shade_notification_scale_summary" formatted="false">同时缩放下拉通知的卡片、图标和文字；100% 为系统默认</string>
 </resources>

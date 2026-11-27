@@ -576,11 +576,11 @@ fun SettingsScreen(repository: SettingsStore) {
                     } else null,
                     preview = if (activePart == SettingsPart.Shade) null else {
                         {
-                            Column(Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+                            Column(Modifier.fillMaxWidth().padding(bottom = 6.dp)) {
                                 DrawingSettingsPreview(activePart, settingsState.value, previewScene, isDark)
                                 SceneSelector(
                                     previewScene, { previewScene = it },
-                                    Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 4.dp),
+                                    Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 2.dp),
                                 )
                             }
                         }

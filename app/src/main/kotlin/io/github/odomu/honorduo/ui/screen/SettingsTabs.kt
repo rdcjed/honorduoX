@@ -1,6 +1,5 @@
 ﻿package io.github.odomu.honorduo.ui.screen
 
-import android.app.Activity
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
@@ -8,6 +7,7 @@ import android.os.Build
 import android.provider.Settings
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,12 +41,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.pm.PackageInfoCompat
 import io.github.libxposed.service.XposedService
 import io.github.odomu.honorduo.R
@@ -391,7 +389,7 @@ private fun SettingsSearchField(query: String, onQueryChange: (String) -> Unit) 
                 value = query,
                 onValueChange = onQueryChange,
                 singleLine = true,
-                textStyle = TextStyle(color = MiuixTheme.colorScheme.onSurface, fontSize = 16.sp),
+                textStyle = MiuixTheme.textStyles.body1.copy(color = MiuixTheme.colorScheme.onSurface),
                 cursorBrush = SolidColor(MiuixTheme.colorScheme.primary),
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -414,18 +412,16 @@ private fun SearchResultRow(title: String, summary: String?, query: String, onCl
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             BasicText(
                 text = highlightMatch(title, query, accent),
-                style = TextStyle(
+                style = MiuixTheme.textStyles.body1.copy(
                     color = MiuixTheme.colorScheme.onSurface,
-                    fontSize = 17.sp,
                     fontWeight = FontWeight.Medium,
                 ),
             )
             if (!summary.isNullOrBlank()) {
                 BasicText(
                     text = highlightMatch(summary, query, accent),
-                    style = TextStyle(
+                    style = MiuixTheme.textStyles.footnote2.copy(
                         color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                        fontSize = 13.sp,
                     ),
                 )
             }
@@ -531,6 +527,7 @@ internal fun LazyListScope.aboutTab(
     }
 
     item {
+        val activity = LocalActivity.current
         Card {
             GlassDropdownPreference(
                 title = stringResource(R.string.language_title),
@@ -542,8 +539,10 @@ internal fun LazyListScope.aboutTab(
                 selectedIndex = repository.getAppLanguage(),
                 insideMargin = rowMargin,
             ) { index ->
-                repository.setAppLanguage(index)
-                (repository.context as? Activity)?.recreate()
+                if (index != repository.getAppLanguage()) {
+                    repository.setAppLanguage(index)
+                    activity?.recreate()
+                }
             }
             GlassDropdownPreference(
                 title = stringResource(R.string.nav_style_title),

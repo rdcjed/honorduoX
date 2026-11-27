@@ -170,8 +170,8 @@
     <string name="mobile_type_outside">Outside the ring</string>
     <string name="show_out_type_title">Show out-of-ring network type</string>
     <string name="show_out_type_summary">Hide 5G/4G network type beside signal bars when disabled.</string>
-    <string name="drawing_part_shade">Control Center</string>
-    <string name="card_shade_summary">Panel buttons, lunar date, and weather</string>
+    <string name="drawing_part_shade">Notifications / Control Center</string>
+    <string name="card_shade_summary">Icon and notification sizes, panel buttons and weather</string>
     <string name="shade_hide_power_title">Hide power</string>
     <string name="shade_hide_power_summary">Removes the control center\'s power button; long-pressing the hardware key still opens it.</string>
     <string name="shade_hide_bell_title">Hide bell</string>
@@ -617,4 +617,8 @@
     <string name="readout_position_left">Left side of status bar</string>
     <string name="readout_position_right">Right side of status bar</string>
     <string name="drawing_outside_empty">No outside components are showing. You can enable them in Settings.</string>
+    <string name="shade_icon_scale_title">Control center overall size</string>
+    <string name="shade_icon_scale_summary" formatted="false">Scale the entire control center proportionally, preserving its layout. 100% uses the system size.</string>
+    <string name="shade_notification_scale_title">Notification card size</string>
+    <string name="shade_notification_scale_summary" formatted="false">Scale notification cards, icons and text together. 100% uses the system size.</string>
 </resources>

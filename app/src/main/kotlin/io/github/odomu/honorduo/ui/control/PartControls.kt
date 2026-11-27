@@ -162,6 +162,32 @@ internal fun geometrySliders(): List<SliderSpec> {
     val bolt = IconZones.Part.BOLT
     return listOf(
         SliderSpec(
+            group = GeometryGroup.Scale,
+            part = null,
+            min = Prefs.MIN_SHADE_ICON_SCALE,
+            max = Prefs.MAX_SHADE_ICON_SCALE,
+            read = { it.shadeIconScale },
+            write = { r, v -> r.setShadeIconScale(v) },
+            titleRes = { R.string.shade_icon_scale_title },
+            summaryRes = { R.string.shade_icon_scale_summary },
+            enabled = { true },
+            suffix = "%",
+            editorOwner = SettingsPart.Shade,
+        ),
+        SliderSpec(
+            group = GeometryGroup.Scale,
+            part = null,
+            min = Prefs.MIN_SHADE_NOTIFICATION_SCALE,
+            max = Prefs.MAX_SHADE_NOTIFICATION_SCALE,
+            read = { it.shadeNotificationScale },
+            write = { r, v -> r.setShadeNotificationScale(v) },
+            titleRes = { R.string.shade_notification_scale_title },
+            summaryRes = { R.string.shade_notification_scale_summary },
+            enabled = { true },
+            suffix = "%",
+            editorOwner = SettingsPart.Shade,
+        ),
+        SliderSpec(
             group = GeometryGroup.Layout,
             part = null,
             min = Prefs.MIN_STATUS_BAR_HEIGHT_OFFSET,
@@ -743,7 +769,7 @@ internal fun slidersForPart(part: IconZones.Part): List<SliderSpec> =
 
 internal fun slidersForEditor(part: SettingsPart): List<SliderSpec> = when (part) {
     SettingsPart.Appearance, SettingsPart.Trio,
-    SettingsPart.Battery, SettingsPart.Readouts ->
+    SettingsPart.Battery, SettingsPart.Readouts, SettingsPart.Shade ->
         geometrySliders().filter {
             (it.part == null && it.editorOwner == part) ||
                 (part == SettingsPart.Battery &&

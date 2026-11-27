@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -32,6 +33,7 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.DpSize
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import io.github.odomu.honorduo.R
@@ -88,8 +90,8 @@ internal fun PartSettingsSheet(
     }
     val density = LocalDensity.current
     val windowHeight = with(density) { LocalWindowInfo.current.containerSize.height.toDp() }
-    val compact = windowHeight < 600.dp || LocalDensity.current.fontScale > 1.3f
-    val maxHeight = windowHeight * 0.72f
+    val topInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val maxHeight = (windowHeight - topInset - 64.dp).coerceAtLeast(0.dp)
     val bottomInset = WindowInsets.navigationBars.asPaddingValues()
         .calculateBottomPadding()
     val sheetBackdrop = rememberLayerBackdrop()
@@ -98,6 +100,7 @@ internal fun PartSettingsSheet(
         show = show,
         modifier = Modifier.layerBackdrop(sheetBackdrop),
         title = stringResource(R.string.drawing_settings_title, stringResource(part.labelRes)),
+        insideMargin = DpSize(12.dp, 6.dp),
         onDismissRequest = onDismiss,
         onDismissFinished = onDismissFinished,
     ) {
@@ -108,14 +111,16 @@ internal fun PartSettingsSheet(
                     .heightIn(max = maxHeight)
                     .padding(bottom = bottomInset),
             ) {
-                if (!compact) preview?.invoke()
                 Column(
                     modifier = Modifier
                         .weight(1f, fill = false)
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = 4.dp),
                 ) {
-                    if (compact) preview?.invoke()
+                    preview?.invoke()
+                    if (part == SettingsPart.Shade) {
+                        rows.forEach { SliderRow(it, settings, update) }
+                    }
                     controls.filterNot { it == ContentControl.WifiStyleSwitch }.forEach { control ->
                         ContentControlRow(control, settings, update, ringSettings)
                     }
@@ -179,9 +184,11 @@ internal fun PartSettingsSheet(
                         }
                     }
 
-                    rows.forEach { spec ->
-                        if (spec.enabled(a)) {
-                            SliderRow(spec, settings, update)
+                    if (part != SettingsPart.Shade) {
+                        rows.forEach { spec ->
+                            if (spec.enabled(a)) {
+                                SliderRow(spec, settings, update)
+                            }
                         }
                     }
 

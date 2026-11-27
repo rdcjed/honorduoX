@@ -536,7 +536,7 @@ private fun DrawingEditorCard(
             preview = {
                 Column {
                     DrawingSettingsPreview(current, settings, scene, dark)
-                    SceneSelector(scene, { scene = it }, Modifier.fillMaxWidth().padding(top = 20.dp, bottom = 16.dp))
+                    SceneSelector(scene, { scene = it }, Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 6.dp))
                 }
             },
             onDismiss = { sheetVisible = false },
@@ -699,7 +699,7 @@ internal fun DrawingSettingsPreview(
         val width = if (vertical) StandaloneBatteryView.VERTICAL_WIDTH_DP else 30
         val height = if (vertical) StandaloneBatteryView.VERTICAL_HEIGHT_DP * 0.9f else 17f
         Box(
-            modifier = Modifier.fillMaxWidth().height(92.dp).clip(shape)
+            modifier = Modifier.fillMaxWidth().height(64.dp).clip(shape)
                 .background(MiuixTheme.colorScheme.surfaceContainerHigh),
             contentAlignment = Alignment.Center,
         ) {
@@ -718,7 +718,7 @@ internal fun DrawingSettingsPreview(
             )
         }
     } else if (part == SettingsPart.Readouts) {
-        DrawingReadoutSample(settings, dark, Modifier.fillMaxWidth().height(92.dp))
+        DrawingReadoutSample(settings, dark, Modifier.fillMaxWidth().height(64.dp))
         Text(stringResource(R.string.drawing_readout_sample_summary),
             style = MiuixTheme.textStyles.footnote2,
             color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
@@ -734,14 +734,14 @@ internal fun DrawingSettingsPreview(
         val released = releasedPart(part, settings)
         if (released != 0) {
             DrawingPartPreview(settings, released, dark,
-                Modifier.fillMaxWidth().height(92.dp).clip(shape))
+                Modifier.fillMaxWidth().height(64.dp).clip(shape))
             return
         }
         val previewStack = a.stackedOut() &&
             (part == SettingsPart.Mobile || (part == SettingsPart.Type && a.labelInReading()))
         DrawingSmallPreview(
             settings, sample, dark,
-            Modifier.fillMaxWidth().height(92.dp).clip(shape),
+            Modifier.fillMaxWidth().height(64.dp).clip(shape),
             outType = part == SettingsPart.Type && a.typeOutsideGlyph() && !previewStack,
             outSignal = previewStack,
         )

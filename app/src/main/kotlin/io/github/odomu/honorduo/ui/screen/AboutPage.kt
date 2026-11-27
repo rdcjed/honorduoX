@@ -43,7 +43,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import io.github.odomu.honorduo.BuildConfig
 import io.github.odomu.honorduo.R
 import io.github.odomu.honorduo.ui.component.AmbientMeshBackground
@@ -255,7 +254,7 @@ private fun AboutBrandHeader() {
         Column(Modifier.weight(1f).padding(start = 10.dp)) {
             Text(
                 text = stringResource(R.string.app_name),
-                fontSize = 23.sp,
+                style = MiuixTheme.textStyles.body1,
                 fontWeight = FontWeight.Bold,
                 color = MiuixTheme.colorScheme.onSurface,
             )
@@ -286,12 +285,12 @@ private fun AboutAction(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MiuixTheme.textStyles.body2, color = MiuixTheme.colorScheme.onSurface)
+            Text(title, style = MiuixTheme.textStyles.body1, color = MiuixTheme.colorScheme.onSurface)
             if (summary != null) {
                 Spacer(Modifier.size(2.dp))
                 Text(
                     text = summary,
-                    fontSize = 13.sp,
+                    style = MiuixTheme.textStyles.footnote2,
                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                 )
             }

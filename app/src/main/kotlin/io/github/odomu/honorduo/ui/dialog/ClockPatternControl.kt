@@ -98,7 +98,7 @@ internal fun ClockPatternControl(
             Text(
                 text = if (currentPreview != null) stringResource(R.string.clock_pattern_preview, currentPreview)
                 else stringResource(R.string.clock_pattern_invalid),
-                style = MiuixTheme.textStyles.body2,
+                style = MiuixTheme.textStyles.body1,
                 color = if (currentPreview != null) colors.onSurface else colors.error,
             )
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -79,7 +79,7 @@ internal fun SceneChip(
     ) {
         Text(
             text = label,
-            style = MiuixTheme.textStyles.body2,
+            style = MiuixTheme.textStyles.body1,
             color = if (selected) {
                 MiuixTheme.colorScheme.onPrimary
             } else {

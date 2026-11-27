@@ -90,7 +90,7 @@ internal fun GlassDropdownPreference(
     selectedIndex: Int,
     title: String,
     summary: String? = null,
-    insideMargin: PaddingValues = PaddingValues(16.dp),
+    insideMargin: PaddingValues = SettingsItemMargin,
     enabled: Boolean = true,
     onSelectedIndexChange: (Int) -> Unit,
 ) {
@@ -113,7 +113,7 @@ internal fun GlassDropdownPreference(
     title: String,
     modifier: Modifier = Modifier,
     summary: String? = null,
-    insideMargin: PaddingValues = PaddingValues(16.dp),
+    insideMargin: PaddingValues = SettingsItemMargin,
     enabled: Boolean = entry.enabled,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -129,7 +129,7 @@ internal fun GlassDropdownPreference(
             summary = summary ?: selectedValue,
             endActions = {
                 if (summary != null && selectedValue != null) {
-                    Text(selectedValue, style = MiuixTheme.textStyles.body2,
+                    Text(selectedValue, style = MiuixTheme.textStyles.body1,
                         color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                         modifier = Modifier.padding(end = 8.dp))
                 }
