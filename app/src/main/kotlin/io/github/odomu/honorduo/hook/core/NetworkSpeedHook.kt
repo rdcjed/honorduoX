@@ -5,9 +5,11 @@ import android.util.TypedValue
 import android.view.View
 import android.widget.TextView
 import io.github.libxposed.api.XposedModule
+import io.github.odomu.honorduo.hook.statusbar.NetworkSpeedPlacement
 import io.github.odomu.honorduo.hook.statusbar.StatusBarIconManager
 import io.github.odomu.honorduo.hook.tracker.WifiPresence
 import io.github.odomu.honorduo.model.ModuleConfig
+import io.github.odomu.honorduo.model.Prefs
 import java.util.WeakHashMap
 import kotlin.math.ceil
 import kotlin.math.roundToInt
@@ -26,6 +28,7 @@ internal object NetworkSpeedHook {
     )
 
     private val views = WeakHashMap<TextView, NativeMetrics>()
+    private val placements = WeakHashMap<TextView, NetworkSpeedPlacement>()
     private val numberBounds = Rect()
     private val unitBounds = Rect()
 
@@ -101,10 +104,14 @@ internal object NetworkSpeedHook {
             !a.enabled -> base.paddingEnd
             a.showWifiIndicator && WifiPresence.isConnected -> 0
             // Compensate for a negative icon margin when 5G is the next item.
-            else -> ((3 - minOf(0, a.statusIconSpacing)) * density).roundToInt()
+            else -> ((3 - minOf(0, a.statusRightIconSpacing)) * density).roundToInt()
         }
         if (row.paddingEnd != end) {
             row.setPaddingRelative(row.paddingStart, row.paddingTop, end, row.paddingBottom)
+        }
+        val position = if (a.enabled) a.networkSpeedPosition else Prefs.NETWORK_SPEED_SYSTEM
+        if (position != Prefs.NETWORK_SPEED_SYSTEM || text in placements) {
+            placements.getOrPut(text) { NetworkSpeedPlacement(row, text) }.setPosition(position)
         }
         row.invalidate()
     }

@@ -62,6 +62,9 @@ internal class BarClockView(context: Context) : View(context) {
         private var lunarGap = 0f
         private var rowGap = 0f
 
+        var timeInkLeft: Float? = null
+            private set
+
         private var timeSize = 0f
         private var lineSize = 0f
         private var blockWidth = 0f
@@ -83,6 +86,8 @@ internal class BarClockView(context: Context) : View(context) {
          */
         private fun drawTimeAt(canvas: Canvas, x: Float, baseline: Float, inkFallback: Int) {
             if (time.isEmpty()) return
+            paint.getTextBounds(time, 0, time.length, bounds)
+            timeInkLeft = x + bounds.left
             var cursor = x
             for (i in time.indices) {
                 val picked = if (i < digitColors.size) digitColors[i] else 0
@@ -369,6 +374,7 @@ internal class BarClockView(context: Context) : View(context) {
         private fun wordGap(size: Float): Float = size * BarClockManager.BAR_CLOCK_WORD_GAP
 
         override fun onDraw(canvas: Canvas) {
+            timeInkLeft = null
             if (time.isEmpty() || timeSize <= 0f) return
             paint.typeface = GlyphInk.typefaceFor(weight)
             val currentInk = ink

@@ -56,6 +56,11 @@ class StatusAppearance(c: ModuleSettings) {
     /** True when both master switch and icon-merging are enabled. */
     @JvmField val glyph: Boolean = enabled && mergeIcons
     @JvmField val showBatteryIndicator: Boolean = c.showBatteryIndicator
+    @JvmField val batteryIconScale: Int = c.batteryIconScale
+    @JvmField val batteryIconVertical: Boolean = c.batteryIconVertical
+
+    fun drawsVerticalBattery(): Boolean = enabled && !glyph && showBatteryIndicator && batteryIconVertical
+    fun drawsCustomBattery(): Boolean = drawsVerticalBattery()
     @JvmField val showWifiIndicator: Boolean = c.showWifiIndicator
     @JvmField val showMobileIndicator: Boolean = c.showMobileIndicator
 
@@ -88,7 +93,10 @@ class StatusAppearance(c: ModuleSettings) {
     @JvmField val wifiIconStyle: Int = c.wifiIconStyle
     @JvmField val wifiIconColor: Int = c.wifiIconColor
     @JvmField val networkSpeedScale: Int = c.networkSpeedScale
-    @JvmField val statusIconSpacing: Int = c.statusIconSpacing
+    @JvmField val networkSpeedPosition: Int = c.networkSpeedPosition
+    @JvmField val statusIconScale: Float = c.statusIconScale / 100f
+    @JvmField val statusLeftIconSpacing: Int = c.statusLeftIconSpacing
+    @JvmField val statusRightIconSpacing: Int = c.statusRightIconSpacing
 
     /** The capsule's extra straight run, in design units; see [Prefs.KEY_CAPSULE_LENGTH]. */
     @JvmField val capsuleLength: Int = c.capsuleLength

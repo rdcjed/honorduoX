@@ -65,13 +65,18 @@ class ModuleSettings {
     @JvmField
     var wifiScale = Prefs.DEF_WIFI_SCALE
     var showBatteryIndicator = true
+    var batteryIconScale = Prefs.DEF_BATTERY_ICON_SCALE
+    var batteryIconVertical = false
     var showWifiIndicator = true
     var showMobileIndicator = true
     var wifiStyleSwitch = Prefs.DEF_WIFI_STYLE_SWITCH
     var wifiIconStyle = Prefs.DEF_WIFI_ICON_STYLE
     var wifiIconColor = Prefs.DEF_WIFI_ICON_COLOR
     var networkSpeedScale = Prefs.DEF_NETWORK_SPEED_SCALE
-    var statusIconSpacing = Prefs.DEF_STATUS_ICON_SPACING
+    var networkSpeedPosition = Prefs.NETWORK_SPEED_SYSTEM
+    var statusIconScale = Prefs.DEF_STATUS_ICON_SCALE
+    var statusLeftIconSpacing = Prefs.DEF_STATUS_ICON_SPACING
+    var statusRightIconSpacing = Prefs.DEF_STATUS_ICON_SPACING
 
     /** The capsule's extra straight run; see [Prefs.KEY_CAPSULE_LENGTH]. */
     @JvmField
@@ -481,13 +486,18 @@ class ModuleSettings {
             perfTempChargingOnly = Prefs.DEF_PERF_TEMP_CHARGING_ONLY
             wifiScale = Prefs.DEF_WIFI_SCALE
             showBatteryIndicator = true
+            batteryIconScale = Prefs.DEF_BATTERY_ICON_SCALE
+            batteryIconVertical = false
             showWifiIndicator = true
             showMobileIndicator = true
             wifiStyleSwitch = Prefs.DEF_WIFI_STYLE_SWITCH
             wifiIconStyle = Prefs.DEF_WIFI_ICON_STYLE
             wifiIconColor = Prefs.DEF_WIFI_ICON_COLOR
             networkSpeedScale = Prefs.DEF_NETWORK_SPEED_SCALE
-            statusIconSpacing = Prefs.DEF_STATUS_ICON_SPACING
+            networkSpeedPosition = Prefs.NETWORK_SPEED_SYSTEM
+            statusIconScale = Prefs.DEF_STATUS_ICON_SCALE
+            statusLeftIconSpacing = Prefs.DEF_STATUS_ICON_SPACING
+            statusRightIconSpacing = Prefs.DEF_STATUS_ICON_SPACING
             capsuleLength = Prefs.DEF_CAPSULE_LENGTH
             capsuleLeftDx = Prefs.DEF_CAPSULE_NUDGE
             capsuleLeftDy = Prefs.DEF_CAPSULE_NUDGE
@@ -712,15 +722,24 @@ class ModuleSettings {
                 Prefs.MIN_RING_SPACING_Y, Prefs.MAX_RING_SPACING_Y,
             )
             s.replaceWifiIcon = p.getBoolean(Prefs.KEY_REPLACE_WIFI_ICON, Prefs.DEF_REPLACE_WIFI_ICON)
-            s.statusIconSpacing = p.getInt(Prefs.KEY_STATUS_ICON_SPACING, Prefs.DEF_STATUS_ICON_SPACING)
+            s.statusIconScale = p.getInt(Prefs.KEY_STATUS_ICON_SCALE, Prefs.DEF_STATUS_ICON_SCALE)
+                .coerceIn(Prefs.MIN_STATUS_ICON_SCALE, Prefs.MAX_STATUS_ICON_SCALE)
+            s.statusLeftIconSpacing = p.getInt(Prefs.KEY_STATUS_LEFT_ICON_SPACING, Prefs.DEF_STATUS_ICON_SPACING)
+                .coerceIn(Prefs.MIN_STATUS_ICON_SPACING, Prefs.MAX_STATUS_ICON_SPACING)
+            s.statusRightIconSpacing = p.getInt(Prefs.KEY_STATUS_RIGHT_ICON_SPACING, Prefs.DEF_STATUS_ICON_SPACING)
                 .coerceIn(Prefs.MIN_STATUS_ICON_SPACING, Prefs.MAX_STATUS_ICON_SPACING)
             s.showBatteryIndicator = p.getBoolean(Prefs.KEY_SHOW_BATTERY_INDICATOR, true)
+            s.batteryIconScale = p.getInt(Prefs.KEY_BATTERY_ICON_SCALE, Prefs.DEF_BATTERY_ICON_SCALE)
+                .coerceIn(Prefs.MIN_BATTERY_ICON_SCALE, Prefs.MAX_BATTERY_ICON_SCALE)
+            s.batteryIconVertical = p.getBoolean(Prefs.KEY_BATTERY_ICON_VERTICAL, false)
             s.showWifiIndicator = p.getBoolean(Prefs.KEY_SHOW_WIFI_INDICATOR, true)
             s.showMobileIndicator = p.getBoolean(Prefs.KEY_SHOW_MOBILE_INDICATOR, true)
             s.wifiStyleSwitch = p.getBoolean(Prefs.KEY_WIFI_STYLE_SWITCH, Prefs.DEF_WIFI_STYLE_SWITCH)
             s.wifiIconStyle = p.getInt(Prefs.KEY_WIFI_ICON_STYLE, Prefs.DEF_WIFI_ICON_STYLE).coerceIn(0, Prefs.WIFI_STYLE_ORIGINAL)
             s.wifiIconColor = p.getInt(Prefs.KEY_WIFI_ICON_COLOR, Prefs.DEF_WIFI_ICON_COLOR).coerceIn(0, 4)
             s.networkSpeedScale = p.getInt(Prefs.KEY_NETWORK_SPEED_SCALE, Prefs.DEF_NETWORK_SPEED_SCALE).coerceIn(Prefs.MIN_NETWORK_SPEED_SCALE, Prefs.MAX_NETWORK_SPEED_SCALE)
+            s.networkSpeedPosition = p.getInt(Prefs.KEY_NETWORK_SPEED_POSITION, Prefs.NETWORK_SPEED_SYSTEM)
+                .takeIf { it in Prefs.NETWORK_SPEED_SYSTEM..Prefs.NETWORK_SPEED_LEFT_TOP } ?: Prefs.NETWORK_SPEED_SYSTEM
             s.replaceStatusIcon = p.getBoolean(Prefs.KEY_REPLACE_STATUS_ICON, Prefs.DEF_REPLACE_STATUS_ICON)
             s.hideStatusClock = p.getBoolean(Prefs.KEY_HIDE_STATUS_CLOCK, Prefs.DEF_HIDE_STATUS_CLOCK)
             s.hideAlarmIcon = p.getBoolean(Prefs.KEY_HIDE_ALARM_ICON, Prefs.DEF_HIDE_ALARM_ICON)
@@ -922,7 +941,7 @@ class ModuleSettings {
                 p.getInt(Prefs.KEY_OUT_BAR_PITCH, Prefs.DEF_OUT_BAR_PITCH),
                 Prefs.MIN_OUT_BAR_PITCH, Prefs.MAX_OUT_BAR_PITCH,
             )
-            s.stackStyle = p.getInt(Prefs.KEY_STACK_STYLE, Prefs.DEF_STACK_STYLE)
+            s.stackStyle = p.getInt(Prefs.KEY_STACK_STYLE, Prefs.DEF_STACK_STYLE).coerceIn(Prefs.STACK_STYLE_DOTS, Prefs.STACK_STYLE_ROWS)
             s.ringStackStyle = p.getInt(Prefs.KEY_RING_STACK_STYLE, Prefs.DEF_RING_STACK_STYLE)
             s.stackLabel = p.getInt(Prefs.KEY_STACK_LABEL, Prefs.DEF_STACK_LABEL)
             s.antiBurnIn = p.getBoolean(Prefs.KEY_ANTI_BURN_IN, Prefs.DEF_ANTI_BURN_IN)
@@ -1075,15 +1094,24 @@ class ModuleSettings {
                 Prefs.MIN_RING_SPACING_Y, Prefs.MAX_RING_SPACING_Y,
             )
             s.replaceWifiIcon = bundle.getBoolean(Prefs.KEY_REPLACE_WIFI_ICON, Prefs.DEF_REPLACE_WIFI_ICON)
-            s.statusIconSpacing = bundle.getInt(Prefs.KEY_STATUS_ICON_SPACING, Prefs.DEF_STATUS_ICON_SPACING)
+            s.statusIconScale = bundle.getInt(Prefs.KEY_STATUS_ICON_SCALE, Prefs.DEF_STATUS_ICON_SCALE)
+                .coerceIn(Prefs.MIN_STATUS_ICON_SCALE, Prefs.MAX_STATUS_ICON_SCALE)
+            s.statusLeftIconSpacing = bundle.getInt(Prefs.KEY_STATUS_LEFT_ICON_SPACING, Prefs.DEF_STATUS_ICON_SPACING)
+                .coerceIn(Prefs.MIN_STATUS_ICON_SPACING, Prefs.MAX_STATUS_ICON_SPACING)
+            s.statusRightIconSpacing = bundle.getInt(Prefs.KEY_STATUS_RIGHT_ICON_SPACING, Prefs.DEF_STATUS_ICON_SPACING)
                 .coerceIn(Prefs.MIN_STATUS_ICON_SPACING, Prefs.MAX_STATUS_ICON_SPACING)
             s.showBatteryIndicator = bundle.getBoolean(Prefs.KEY_SHOW_BATTERY_INDICATOR, true)
+            s.batteryIconScale = bundle.getInt(Prefs.KEY_BATTERY_ICON_SCALE, Prefs.DEF_BATTERY_ICON_SCALE)
+                .coerceIn(Prefs.MIN_BATTERY_ICON_SCALE, Prefs.MAX_BATTERY_ICON_SCALE)
+            s.batteryIconVertical = bundle.getBoolean(Prefs.KEY_BATTERY_ICON_VERTICAL, false)
             s.showWifiIndicator = bundle.getBoolean(Prefs.KEY_SHOW_WIFI_INDICATOR, true)
             s.showMobileIndicator = bundle.getBoolean(Prefs.KEY_SHOW_MOBILE_INDICATOR, true)
             s.wifiStyleSwitch = bundle.getBoolean(Prefs.KEY_WIFI_STYLE_SWITCH, Prefs.DEF_WIFI_STYLE_SWITCH)
             s.wifiIconStyle = bundle.getInt(Prefs.KEY_WIFI_ICON_STYLE, Prefs.DEF_WIFI_ICON_STYLE).coerceIn(0, Prefs.WIFI_STYLE_ORIGINAL)
             s.wifiIconColor = bundle.getInt(Prefs.KEY_WIFI_ICON_COLOR, Prefs.DEF_WIFI_ICON_COLOR).coerceIn(0, 4)
             s.networkSpeedScale = bundle.getInt(Prefs.KEY_NETWORK_SPEED_SCALE, Prefs.DEF_NETWORK_SPEED_SCALE).coerceIn(Prefs.MIN_NETWORK_SPEED_SCALE, Prefs.MAX_NETWORK_SPEED_SCALE)
+            s.networkSpeedPosition = bundle.getInt(Prefs.KEY_NETWORK_SPEED_POSITION, Prefs.NETWORK_SPEED_SYSTEM)
+                .takeIf { it in Prefs.NETWORK_SPEED_SYSTEM..Prefs.NETWORK_SPEED_LEFT_TOP } ?: Prefs.NETWORK_SPEED_SYSTEM
             s.replaceStatusIcon = bundle.getBoolean(Prefs.KEY_REPLACE_STATUS_ICON, Prefs.DEF_REPLACE_STATUS_ICON)
             s.hideStatusClock = bundle.getBoolean(Prefs.KEY_HIDE_STATUS_CLOCK, Prefs.DEF_HIDE_STATUS_CLOCK)
             s.hideAlarmIcon = bundle.getBoolean(Prefs.KEY_HIDE_ALARM_ICON, Prefs.DEF_HIDE_ALARM_ICON)
@@ -1283,7 +1311,7 @@ class ModuleSettings {
                 bundle.getInt(Prefs.KEY_OUT_BAR_PITCH, Prefs.DEF_OUT_BAR_PITCH),
                 Prefs.MIN_OUT_BAR_PITCH, Prefs.MAX_OUT_BAR_PITCH,
             )
-            s.stackStyle = bundle.getInt(Prefs.KEY_STACK_STYLE, Prefs.DEF_STACK_STYLE)
+            s.stackStyle = bundle.getInt(Prefs.KEY_STACK_STYLE, Prefs.DEF_STACK_STYLE).coerceIn(Prefs.STACK_STYLE_DOTS, Prefs.STACK_STYLE_ROWS)
             s.ringStackStyle = bundle.getInt(Prefs.KEY_RING_STACK_STYLE, Prefs.DEF_RING_STACK_STYLE)
             s.stackLabel = bundle.getInt(Prefs.KEY_STACK_LABEL, Prefs.DEF_STACK_LABEL)
             s.antiBurnIn = bundle.getBoolean(Prefs.KEY_ANTI_BURN_IN, Prefs.DEF_ANTI_BURN_IN)
@@ -1579,13 +1607,18 @@ class ModuleSettings {
         s.perfTempChargingOnly = perfTempChargingOnly
         s.wifiScale = wifiScale
         s.showBatteryIndicator = showBatteryIndicator
+        s.batteryIconScale = batteryIconScale
+        s.batteryIconVertical = batteryIconVertical
         s.showWifiIndicator = showWifiIndicator
         s.showMobileIndicator = showMobileIndicator
         s.wifiStyleSwitch = wifiStyleSwitch
         s.wifiIconStyle = wifiIconStyle
         s.wifiIconColor = wifiIconColor
         s.networkSpeedScale = networkSpeedScale
-        s.statusIconSpacing = statusIconSpacing
+        s.networkSpeedPosition = networkSpeedPosition
+        s.statusIconScale = statusIconScale
+        s.statusLeftIconSpacing = statusLeftIconSpacing
+        s.statusRightIconSpacing = statusRightIconSpacing
         s.capsuleLength = capsuleLength
         s.capsuleLeftDx = capsuleLeftDx
         s.capsuleLeftDy = capsuleLeftDy
@@ -1777,13 +1810,18 @@ class ModuleSettings {
             Prefs.KEY_PERF_TEMP_CHARGING_ONLY -> perfTempChargingOnly = src.perfTempChargingOnly
             Prefs.KEY_WIFI_SCALE -> wifiScale = src.wifiScale
             Prefs.KEY_SHOW_BATTERY_INDICATOR -> showBatteryIndicator = src.showBatteryIndicator
+            Prefs.KEY_BATTERY_ICON_SCALE -> batteryIconScale = src.batteryIconScale
+            Prefs.KEY_BATTERY_ICON_VERTICAL -> batteryIconVertical = src.batteryIconVertical
             Prefs.KEY_SHOW_WIFI_INDICATOR -> showWifiIndicator = src.showWifiIndicator
             Prefs.KEY_SHOW_MOBILE_INDICATOR -> showMobileIndicator = src.showMobileIndicator
             Prefs.KEY_WIFI_STYLE_SWITCH -> wifiStyleSwitch = src.wifiStyleSwitch
             Prefs.KEY_WIFI_ICON_STYLE -> wifiIconStyle = src.wifiIconStyle
             Prefs.KEY_WIFI_ICON_COLOR -> wifiIconColor = src.wifiIconColor
             Prefs.KEY_NETWORK_SPEED_SCALE -> networkSpeedScale = src.networkSpeedScale
-            Prefs.KEY_STATUS_ICON_SPACING -> statusIconSpacing = src.statusIconSpacing
+            Prefs.KEY_NETWORK_SPEED_POSITION -> networkSpeedPosition = src.networkSpeedPosition
+            Prefs.KEY_STATUS_ICON_SCALE -> statusIconScale = src.statusIconScale
+            Prefs.KEY_STATUS_LEFT_ICON_SPACING -> statusLeftIconSpacing = src.statusLeftIconSpacing
+            Prefs.KEY_STATUS_RIGHT_ICON_SPACING -> statusRightIconSpacing = src.statusRightIconSpacing
             Prefs.KEY_CAPSULE_LENGTH -> capsuleLength = src.capsuleLength
             Prefs.KEY_CAPSULE_LEFT_DX -> capsuleLeftDx = src.capsuleLeftDx
             Prefs.KEY_CAPSULE_LEFT_DY -> capsuleLeftDy = src.capsuleLeftDy
@@ -1944,13 +1982,18 @@ class ModuleSettings {
         putBoolean(Prefs.KEY_PERF_TEMP_CHARGING_ONLY, perfTempChargingOnly)
         putInt(Prefs.KEY_WIFI_SCALE, wifiScale)
         putBoolean(Prefs.KEY_SHOW_BATTERY_INDICATOR, showBatteryIndicator)
+        putInt(Prefs.KEY_BATTERY_ICON_SCALE, batteryIconScale)
+        putBoolean(Prefs.KEY_BATTERY_ICON_VERTICAL, batteryIconVertical)
         putBoolean(Prefs.KEY_SHOW_WIFI_INDICATOR, showWifiIndicator)
         putBoolean(Prefs.KEY_SHOW_MOBILE_INDICATOR, showMobileIndicator)
         putBoolean(Prefs.KEY_WIFI_STYLE_SWITCH, wifiStyleSwitch)
         putInt(Prefs.KEY_WIFI_ICON_STYLE, wifiIconStyle)
         putInt(Prefs.KEY_WIFI_ICON_COLOR, wifiIconColor)
         putInt(Prefs.KEY_NETWORK_SPEED_SCALE, networkSpeedScale)
-        putInt(Prefs.KEY_STATUS_ICON_SPACING, statusIconSpacing)
+        putInt(Prefs.KEY_NETWORK_SPEED_POSITION, networkSpeedPosition)
+        putInt(Prefs.KEY_STATUS_ICON_SCALE, statusIconScale)
+        putInt(Prefs.KEY_STATUS_LEFT_ICON_SPACING, statusLeftIconSpacing)
+        putInt(Prefs.KEY_STATUS_RIGHT_ICON_SPACING, statusRightIconSpacing)
         putInt(Prefs.KEY_CAPSULE_LENGTH, capsuleLength)
         putInt(Prefs.KEY_CAPSULE_LEFT_DX, capsuleLeftDx)
         putInt(Prefs.KEY_CAPSULE_LEFT_DY, capsuleLeftDy)
@@ -2115,10 +2158,12 @@ class ModuleSettings {
             wifiIconStyle == other.wifiIconStyle &&
             wifiIconColor == other.wifiIconColor &&
             showBatteryIndicator == other.showBatteryIndicator &&
+            batteryIconScale == other.batteryIconScale && batteryIconVertical == other.batteryIconVertical &&
             showWifiIndicator == other.showWifiIndicator &&
             showMobileIndicator == other.showMobileIndicator &&
-            networkSpeedScale == other.networkSpeedScale &&
-            statusIconSpacing == other.statusIconSpacing &&
+            networkSpeedScale == other.networkSpeedScale && networkSpeedPosition == other.networkSpeedPosition &&
+            statusIconScale == other.statusIconScale &&
+            statusLeftIconSpacing == other.statusLeftIconSpacing && statusRightIconSpacing == other.statusRightIconSpacing &&
             wifiScale == other.wifiScale && valueCentred == other.valueCentred && valueSize == other.valueSize &&
             valueWeight == other.valueWeight && boltScale == other.boltScale && boltAnim == other.boltAnim &&
             boltSpeed == other.boltSpeed && chargingShowsValue == other.chargingShowsValue &&

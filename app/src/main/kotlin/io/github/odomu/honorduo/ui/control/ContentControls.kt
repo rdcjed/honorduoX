@@ -77,6 +77,7 @@ internal enum class ContentControl(val owner: SettingsPart) {
     Style(SettingsPart.Appearance),
     AntiBurnIn(SettingsPart.Appearance),
     ShowBatteryIndicator(SettingsPart.Battery),
+    BatteryIconVertical(SettingsPart.Battery),
     ShowWifiIndicator(SettingsPart.Wifi),
     ShowMobileIndicator(SettingsPart.Mobile),
     SignalColumns(SettingsPart.Mobile),
@@ -132,6 +133,7 @@ internal enum class ContentControl(val owner: SettingsPart) {
      */
     Type(SettingsPart.Type),
     ShowOutType(SettingsPart.Type),
+    NetworkSpeedPosition(SettingsPart.Readouts),
     Power(SettingsPart.Readouts),
     StackStyle(SettingsPart.Mobile),
     /**
@@ -323,6 +325,12 @@ internal fun ContentControlRow(
             summaryRes = R.string.status_indicator_summary,
             dependencies = emptyList(),
         ) { value -> update { it.setShowBatteryIndicator(value) } }
+        ContentControl.BatteryIconVertical -> ContentToggle(
+            checked = settings.batteryIconVertical,
+            title = R.string.battery_icon_vertical_title,
+            summaryRes = R.string.battery_icon_vertical_summary,
+            dependencies = emptyList(),
+        ) { value -> update { it.setBatteryIconVertical(value) } }
         ContentControl.ShowWifiIndicator -> ContentToggle(
             checked = settings.showWifiIndicator,
             title = R.string.show_wifi_indicator_title,
@@ -638,6 +646,18 @@ internal fun ContentControlRow(
                 dependencies = listOf(settings.shadeWeather to R.string.shade_weather_title),
             ) { value -> update { it.setShadeWeatherClick(value) } }
         } else Unit
+        ContentControl.NetworkSpeedPosition -> {
+            val positions = listOf(Prefs.NETWORK_SPEED_RIGHT_TOP, Prefs.NETWORK_SPEED_CENTER,
+                Prefs.NETWORK_SPEED_LEFT_TOP, Prefs.NETWORK_SPEED_SYSTEM)
+            ContentChoice(
+                selected = positions.indexOf(settings.networkSpeedPosition),
+                title = R.string.network_speed_position_title,
+                summaryRes = null,
+                options = listOf(R.string.network_speed_right_top, R.string.network_speed_center,
+                    R.string.network_speed_left_top, R.string.network_speed_restore),
+                dependencies = emptyList(),
+            ) { index -> update { it.setNetworkSpeedPosition(positions[index]) } }
+        }
         ContentControl.Power, ContentControl.RunningPower, ContentControl.Temperature,
         ContentControl.Fps, ContentControl.Current, ContentControl.Voltage,
         ContentControl.PerfSignal, ContentControl.BtBatteryMode -> Unit

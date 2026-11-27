@@ -232,7 +232,9 @@ private val CONTROL_TITLE_ALIASES = mapOf(
     ContentControl.Sim2 to "show_sim_2_title",
     ContentControl.Value to "show_value_title",
     ContentControl.Bolt to "show_bolt_title",
+    ContentControl.BatteryIconVertical to "battery_icon_vertical_title",
     ContentControl.Clock to "drawing_occupant_clock",
+    ContentControl.NetworkSpeedPosition to "network_speed_position_title",
     ContentControl.ShadeWeatherStyle to "weather_style_title",
     ContentControl.ShadeWeatherClick to "shade_weather_click_title",
 )

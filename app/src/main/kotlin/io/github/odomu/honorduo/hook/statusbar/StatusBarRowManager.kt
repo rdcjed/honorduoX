@@ -47,6 +47,7 @@ import io.github.odomu.honorduo.ui.render.geometry.IconGeometry
 import io.github.odomu.honorduo.ui.view.GlyphView
 import io.github.odomu.honorduo.ui.view.OutSignalView
 import io.github.odomu.honorduo.ui.view.OutTypeLabel
+import io.github.odomu.honorduo.ui.view.StandaloneBatteryView
 import io.github.odomu.honorduo.ui.view.PerfLabel
 import java.lang.reflect.Field
 import java.util.Locale
@@ -126,6 +127,9 @@ internal object StatusBarRowManager {
                         r.row.viewTreeObserver.removeOnWindowVisibilityChangeListener(it)
                     }
                     resetBurnIn(r)
+                    removeBatteryIcon(r)
+                    StatusBarIconScale.applyGroups(r.row, r.container, 1f)
+                    StatusIconSpacing.applyLeft(r.row, 0)
                     removeLeftReadouts(r)
                 }
             }
@@ -201,6 +205,7 @@ internal object StatusBarRowManager {
 
     private fun hideAll(row: Row) {
         row.glyph?.visibility = View.GONE
+        row.verticalBattery?.visibility = View.GONE
         row.signal?.visibility = View.GONE
         row.perf?.visibility = View.GONE
         row.fps?.visibility = View.GONE
@@ -285,7 +290,10 @@ internal object StatusBarRowManager {
         if (!a.enabled) {
             unmountGlyph(row)
             unmountOutViews(row)
-            StatusIconSpacing.apply(row.container, 0)
+            removeBatteryIcon(row)
+            StatusBarIconScale.applyGroups(row.row, row.container, 1f)
+            StatusIconSpacing.applyRight(row.container, 0)
+            StatusIconSpacing.applyLeft(row.row, 0)
             StatusBarIconManager.release(row.battery)
             return
         }
@@ -294,7 +302,11 @@ internal object StatusBarRowManager {
         // which read as the bar blinking.
         if (suppressed) {
             hideAll(row)
-            StatusIconSpacing.apply(row.container, 0)
+            StatusBarIconScale.restore(row.battery)
+            row.glyph?.let(StatusBarIconScale::restore)
+            StatusBarIconScale.applyGroups(row.row, row.container, 1f)
+            StatusIconSpacing.applyRight(row.container, 0)
+            StatusIconSpacing.applyLeft(row.row, 0)
             StatusBarIconManager.release(row.battery)
             return
         }
@@ -309,9 +321,13 @@ internal object StatusBarRowManager {
             StatusBarIconManager.hide(row.battery)
         }
         if (!a.showBatteryIndicator) StatusBarIconManager.hide(row.battery)
+        syncBatteryIcon(row, a)
         StatusBarIconManager.settle(row.container, a)
         syncOutViews(row)
-        StatusIconSpacing.apply(row.container, a.statusIconSpacing)
+        StatusBarIconScale.applyGroups(row.row, row.container, a.statusIconScale)
+        row.glyph?.let { StatusBarIconScale.apply(it, a.statusIconScale) }
+        StatusIconSpacing.applyRight(row.container, a.statusRightIconSpacing)
+        StatusIconSpacing.applyLeft(row.row, a.statusLeftIconSpacing, row.leftReadouts)
         refreshTint(row)
         val key = measureKey(a)
         if (row.lastMeasureKey != key) {
@@ -375,6 +391,7 @@ internal object StatusBarRowManager {
 
     private fun unmountGlyph(row: Row) {
         val glyph = row.glyph ?: return
+        StatusBarIconScale.restore(glyph)
         try {
             row.container.removeView(glyph)
         } catch (ignored: Throwable) {
@@ -510,7 +527,8 @@ internal object StatusBarRowManager {
         )
         signal.bars = max(0, reading[0])
         signal.dots = reading[1]
-        var height = OutSignalRenderer.outSignalHeight(a, a.outSignalSize, density, dual)
+        var height = (OutSignalRenderer.outSignalHeight(a, a.outSignalSize, density, dual) *
+            a.statusIconScale).roundToInt().coerceAtLeast(1)
         // The reading is centred in the row, and its caption is drawn flush with its TOP,
         // so anything taller than the row overflows UPWARD first and the bar's top edge
         // eats the caption before it touches the bars. The row's own height is not the
@@ -710,6 +728,7 @@ internal object StatusBarRowManager {
         items: List<ActivePerfItem>,
         density: Float,
         leftStrip: LinearLayout? = null,
+        leftSpacingDp: Int = 0,
     ): PerfLabel? {
         if (items.isEmpty()) {
             remove(row, existing)
@@ -759,7 +778,9 @@ internal object StatusBarRowManager {
             }
         }
         label.setTextColor(baseColor)
-        val gap = if (leftStrip != null) maxOf(a.outSignalMargin, 2) else a.outSignalMargin
+        val gap = if (leftStrip != null) {
+            (maxOf(a.outSignalMargin, 2) + leftSpacingDp).coerceAtLeast(0)
+        } else a.outSignalMargin
         size(label, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, gap, 0, density)
         label.visibility = View.VISIBLE
         StatusBarIconManager.release(label)
@@ -771,11 +792,7 @@ internal object StatusBarRowManager {
             removeLeftReadouts(row)
             return
         }
-        var contents = row.row.parent as? ViewGroup
-        while (contents != null && !contents.javaClass.name.endsWith("HwStatusbarContents")) {
-            contents = contents.parent as? ViewGroup
-        }
-        val clock = contents?.findViewById<View>(StatusBarIconManager.clockId)
+        val clock = StatusBarIconManager.contentsOf(row.row)?.findViewById<View>(StatusBarIconManager.clockId)
         val parent = clock?.parent as? LinearLayout
         if (clock == null || parent == null || parent.orientation != LinearLayout.HORIZONTAL ||
             StatusBarIconManager.isKeyguardTree(clock)
@@ -790,19 +807,19 @@ internal object StatusBarRowManager {
                 gravity = Gravity.CENTER_VERTICAL
                 val params = LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
-                ).apply {
-                    gravity = Gravity.CENTER_VERTICAL
-                    marginStart = (3f * density).roundToInt()
-                }
+                )
                 parent.addView(this, parent.indexOfChild(clock) + 1, params)
                 row.leftReadouts = this
             }
         }
+        val clockGap = if (clock.visibility == View.VISIBLE) 3 + a.statusLeftIconSpacing else 3
+        size(strip, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, 0, clockGap, density)
         strip.visibility = View.VISIBLE
         val groups = items.chunked(2)
         while (strip.childCount > groups.size) strip.removeViewAt(strip.childCount - 1)
         for ((index, group) in groups.withIndex()) {
-            applyReadoutGroup(row, a, strip.getChildAt(index) as? PerfLabel, group, density, strip)
+            val spacing = if (index < groups.lastIndex) a.statusLeftIconSpacing else 0
+            applyReadoutGroup(row, a, strip.getChildAt(index) as? PerfLabel, group, density, strip, spacing)
         }
     }
 
@@ -841,7 +858,8 @@ internal object StatusBarRowManager {
             applyOutTypeText(label, text, a.typeSuffixScale)
         }
         applyTypeface(label, a.typeWeight)
-        label.setTextSize(TypedValue.COMPLEX_UNIT_PX, (a.outTypeSize * density).roundToInt().toFloat())
+        val textSize = (a.outTypeSize * density * a.statusIconScale).roundToInt().toFloat()
+        if (label.textSize != textSize) label.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSize)
         label.setTextColor(row.state.foreground())
         size(
             label, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -851,9 +869,67 @@ internal object StatusBarRowManager {
         StatusBarIconManager.release(label)
     }
 
-    /** Inserts [view] immediately before the glyph, so the row orders them. */
+    private fun syncBatteryIcon(row: Row, a: StatusAppearance) {
+        if (a.drawsCustomBattery() && row.state.level < 0) row.state.refresh()
+        val customBattery = a.drawsCustomBattery() && row.state.level in 0..100
+        val factor = a.batteryIconScale / 100f * a.statusIconScale
+        val density = row.row.resources.displayMetrics.density
+        val barHeight = barHeight(row.row)
+        if (!customBattery) {
+            removeVerticalBattery(row)
+            val nativeHeight = row.battery.measuredHeight
+            val fit = if (nativeHeight > 0 && barHeight > 0) barHeight.toFloat() / nativeHeight else factor
+            val scale = if (!a.glyph && a.showBatteryIndicator && factor != 1f) min(factor, fit) else 1f
+            StatusBarIconScale.apply(row.battery, scale)
+            return
+        }
+        StatusBarIconScale.restore(row.battery)
+        val view = inRow(row, row.verticalBattery) ?: StandaloneBatteryView(row.row.context).also {
+            remove(row, row.verticalBattery)
+            row.verticalBattery = null
+            insertBefore(row, it)
+            (it.layoutParams as? LinearLayout.LayoutParams)?.let { params ->
+                params.marginStart = (4f * density).roundToInt()
+                it.layoutParams = params
+            }
+            row.verticalBattery = it
+            row.outOrderApplied = null
+        }
+        view.vertical = a.batteryIconVertical
+        val baseHeight = StandaloneBatteryView.VERTICAL_HEIGHT_DP * 0.8f * 0.9f
+        val desiredHeight = baseHeight * density * factor
+        val rowHeight = row.container.height.takeIf { it > 0 } ?: barHeight
+        val ceiling = if (barHeight > 0 && rowHeight > 0) min(barHeight, rowHeight) else maxOf(barHeight, rowHeight)
+        val h = if (ceiling > 0) min(desiredHeight, ceiling.toFloat()) else desiredHeight
+        val w = h * StandaloneBatteryView.VERTICAL_WIDTH_DP / (StandaloneBatteryView.VERTICAL_HEIGHT_DP * 0.9f)
+        val params = view.layoutParams as? LinearLayout.LayoutParams
+        val width = w.roundToInt()
+        val height = h.roundToInt()
+        if (params == null || params.width != width || params.height != height || params.gravity != Gravity.CENTER_VERTICAL) {
+            view.layoutParams = (params ?: LinearLayout.LayoutParams(width, height)).apply {
+                this.width = width
+                this.height = height
+                gravity = Gravity.CENTER_VERTICAL
+            }
+        }
+        view.visibility = View.VISIBLE
+    }
+
+    private fun removeVerticalBattery(row: Row) {
+        val view = row.verticalBattery ?: return
+        remove(row, view)
+        row.verticalBattery = null
+        row.outOrderApplied = null
+    }
+
+    private fun removeBatteryIcon(row: Row) {
+        removeVerticalBattery(row)
+        StatusBarIconScale.restore(row.battery)
+    }
+
+    /** Inserts [view] before the battery or merged glyph. */
     private fun insertBefore(row: Row, view: View) {
-        val anchor: View = row.glyph ?: row.battery
+        val anchor: View = row.glyph ?: row.verticalBattery ?: row.battery
         val at = row.container.indexOfChild(anchor)
         val lp = view.layoutParams ?: LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -1006,7 +1082,7 @@ internal object StatusBarRowManager {
         val avoidBound = capsuleRight + safeGap
         val loc = IntArray(2)
 
-        val views = listOfNotNull(row.signal, row.type, row.perf, row.fps, row.glyph)
+        val views = listOfNotNull(row.signal, row.type, row.perf, row.fps, row.glyph, row.verticalBattery)
         for (v in views) {
             if (v.parent !== row.container) continue
             if (!isShown || capsuleRight <= 0) {
@@ -1153,6 +1229,16 @@ internal object StatusBarRowManager {
         val glyphHost = row.glyph ?: row.row
         row.state.ink = StatusBarIconManager.foreground(glyphHost, row.state.foreground())
         row.glyph?.invalidate()
+        row.verticalBattery?.let {
+            it.level = row.state.level
+            it.charging = row.state.charging
+            it.powerSave = row.state.powerSave
+            it.low = row.state.low
+            it.showNumber = StatusBarIconManager.batteryShowsNumber(row.battery)
+            it.foreground = StatusBarIconManager.foreground(it, row.state.foreground())
+            it.contentDescription = row.battery.contentDescription
+            it.invalidate()
+        }
         row.signal?.let {
             it.foreground = StatusBarIconManager.foreground(it, row.state.foreground())
             it.invalidate()
@@ -1185,6 +1271,7 @@ internal object StatusBarRowManager {
         val state: StatusState,
     ) {
         var glyph: GlyphView? = null
+        var verticalBattery: StandaloneBatteryView? = null
         var signal: OutSignalView? = null
         var perf: PerfLabel? = null
         var leftReadouts: LinearLayout? = null

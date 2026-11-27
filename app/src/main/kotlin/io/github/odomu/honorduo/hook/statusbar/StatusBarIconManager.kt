@@ -44,6 +44,8 @@ internal object StatusBarIconManager {
         private set
     @Volatile var mobileSignalId = 0
         private set
+    private var batteryInsidePercentId = 0
+    private var batteryOutsidePercentId = 0
     private var nativeTypeId = 0
     private var nativeSignalTypeId = 0
 
@@ -150,6 +152,8 @@ internal object StatusBarIconManager {
         wifiId = id(res, "wifi_combo")
         mobileId = id(res, "mobile_combo")
         batteryId = id(res, "battery")
+        batteryInsidePercentId = id(res, "battery_inside_percent")
+        batteryOutsidePercentId = id(res, "battery_outside_percent")
         clockId = id(res, "clock")
         mobileGroupId = id(res, "mobile_combo")
         mobileSignalId = id(res, "mobile_signal")
@@ -185,6 +189,19 @@ internal object StatusBarIconManager {
         else -> false
     }
 
+    private fun isOwned(view: View, a: StatusAppearance): Boolean = isOwned(view.id, a) ||
+        (view.id == batteryId && !StatusBarRowManager.suppressed && a.drawsCustomBattery() &&
+            StatusBarRowManager.rowOfBattery(view)?.verticalBattery?.let {
+                it.parent != null && it.parent === view.parent && it.visibility == View.VISIBLE
+            } == true)
+
+    fun batteryShowsNumber(battery: View): Boolean {
+        val inside = battery.findViewById<View>(batteryInsidePercentId)
+        val outside = battery.findViewById<View>(batteryOutsidePercentId)
+        return (inside == null && outside == null) || inside?.visibility == View.VISIBLE ||
+            outside?.visibility == View.VISIBLE
+    }
+
     /** Replaces only the native labels inside a managed row, leaving the signal bars in place. */
     fun settleNativeTypes(root: View, replace: Boolean) {
         if (root.id != 0 && (root.id == nativeTypeId || root.id == nativeSignalTypeId)) {
@@ -208,7 +225,7 @@ internal object StatusBarIconManager {
             return
         }
         if (id == wifiId || id == mobileId || id == batteryId) {
-            if (isOwned(id, a)) {
+            if (isOwned(root, a)) {
                 rememberHidden(root)
                 hide(root)
             } else {
@@ -353,7 +370,7 @@ internal object StatusBarIconManager {
         // Never suppress a same-id keyguard or unparented clock during inflation.
         if (id == clockId && isKeyguardClock(view)) return
         if (!insideOwnedContainer(view)) return
-        if (isOwned(id, a)) {
+        if (isOwned(view, a)) {
             rememberHidden(view)
             hide(view)
         }
@@ -506,13 +523,17 @@ internal object StatusBarIconManager {
     private fun isKeyguardClock(view: View): Boolean =
         view.id == clockId && isKeyguardTree(view)
 
+    fun contentsOf(view: View): ViewGroup? {
+        var parent = view.parent as? ViewGroup
+        while (parent != null && !parent.javaClass.name.endsWith("HwStatusbarContents")) {
+            parent = parent.parent as? ViewGroup
+        }
+        return parent
+    }
+
     /** Resolves ROM tint for the actual painted View, not a hidden battery's stale box. */
     fun foreground(view: View, fallback: Int): Int {
-        var contents = view.parent as? View
-        while (contents != null && !contents.javaClass.name.endsWith("HwStatusbarContents")) {
-            contents = contents.parent as? View
-        }
-        contents ?: return fallback
+        val contents = contentsOf(view) ?: return fallback
         val tint = Refl.getInt(Refl.field(contents.javaClass, "mIconTint"), contents, fallback)
         val area = Refl.get(Refl.field(contents.javaClass, "mTintArea"), contents) ?: return tint
         val dispatcher = Refl.cls("com.android.systemui.plugins.DarkIconDispatcher", contents.javaClass.classLoader ?: return tint)

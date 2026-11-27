@@ -136,6 +136,7 @@ internal object BarClockManager {
         // Always layout so the draw coordinate system matches the current native size
         // even when a layout pass ran after the last measure hook (capsule collapse).
         renderer.layout(0, 0, native.width, native.height)
+        val previousTimeLeft = renderer.timeInkLeft
         val save = canvas.save()
         try {
             canvas.translate(native.scrollX.toFloat(), native.scrollY.toFloat())
@@ -143,6 +144,21 @@ internal object BarClockManager {
         } finally {
             canvas.restoreToCount(save)
         }
+        if (previousTimeLeft != renderer.timeInkLeft &&
+            ModuleConfig.appearance().networkSpeedPosition == Prefs.NETWORK_SPEED_LEFT_TOP
+        ) native.postInvalidateOnAnimation()
+    }
+
+    fun timeInkLeft(clock: TextView, bounds: android.graphics.Rect): Float {
+        val padding = clock.compoundPaddingLeft.toFloat()
+        if (modes[clock] == 1) return clocks[clock]?.timeInkLeft ?: padding
+        val layout = clock.layout ?: return padding
+        if (layout.lineCount == 0) return padding
+        val start = layout.getLineStart(0)
+        val end = layout.getLineVisibleEnd(0)
+        if (end <= start) return padding
+        clock.paint.getTextBounds(layout.text, start, end, bounds)
+        return padding + layout.getLineLeft(0) + bounds.left
     }
 
     fun noteNativeClock(clock: TextView) {

@@ -19,6 +19,7 @@ import android.os.Looper
 import android.view.View
 import android.view.ViewGroup
 import io.github.libxposed.api.XposedModule
+import io.github.odomu.honorduo.hook.statusbar.StatusBarIconScale
 import io.github.odomu.honorduo.model.ModuleConfig
 import java.lang.reflect.Field
 import java.lang.reflect.Method
@@ -128,7 +129,7 @@ internal object CapsuleScaleHook {
      */
     fun resetSubtreeScale(view: View) {
         if (restoreRunning) return
-        if (view.scaleX != 1.0f || view.scaleY != 1.0f) {
+        if (!StatusBarIconScale.isActive(view) && (view.scaleX != 1.0f || view.scaleY != 1.0f)) {
             view.scaleX = 1.0f
             view.scaleY = 1.0f
             return

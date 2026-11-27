@@ -82,6 +82,7 @@ import io.github.odomu.honorduo.ui.drawing.SceneSelector
 import io.github.odomu.honorduo.ui.drawing.SignalOutOfRingNotice
 import io.github.odomu.honorduo.ui.manager.SettingsStore
 import io.github.odomu.honorduo.ui.render.IconZones
+import io.github.odomu.honorduo.ui.view.StandaloneBatteryView
 import io.github.odomu.honorduo.ui.view.StatusPreviewView
 import top.yukonga.miuix.kmp.basic.Button
 import top.yukonga.miuix.kmp.basic.Card
@@ -688,7 +689,31 @@ internal fun DrawingSettingsPreview(
 ) {
     val a = StatusAppearance.of(settings)
     val shape = RoundedCornerShape(12.dp)
-    if (part == SettingsPart.Readouts) {
+    if (part == SettingsPart.Battery && !a.glyph) {
+        val vertical = a.batteryIconVertical
+        val scale = a.batteryIconScale / 100f * 2f * if (vertical) 0.8f else 1f
+        val width = if (vertical) StandaloneBatteryView.VERTICAL_WIDTH_DP else 30
+        val height = if (vertical) StandaloneBatteryView.VERTICAL_HEIGHT_DP * 0.9f else 17f
+        Box(
+            modifier = Modifier.fillMaxWidth().height(92.dp).clip(shape)
+                .background(MiuixTheme.colorScheme.surfaceContainerHigh),
+            contentAlignment = Alignment.Center,
+        ) {
+            AndroidView(
+                modifier = Modifier.size((width * scale).dp, (height * scale).dp),
+                factory = { StandaloneBatteryView(it) },
+                update = { view ->
+                    view.vertical = vertical
+                    view.level = scene.level
+                    view.charging = scene.charging
+                    view.powerSave = scene.powerSave
+                    view.low = scene.low
+                    view.foreground = if (dark) android.graphics.Color.WHITE else android.graphics.Color.BLACK
+                    view.invalidate()
+                },
+            )
+        }
+    } else if (part == SettingsPart.Readouts) {
         DrawingReadoutSample(settings, dark, Modifier.fillMaxWidth().height(92.dp))
         Text(stringResource(R.string.drawing_readout_sample_summary),
             style = MiuixTheme.textStyles.footnote2,
