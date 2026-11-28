@@ -118,6 +118,9 @@ internal fun PartSettingsSheet(
                         .padding(horizontal = 4.dp),
                 ) {
                     preview?.invoke()
+                    if (part == SettingsPart.Shade) {
+                        rows.forEach { SliderRow(it, settings, update) }
+                    }
                     controls.filterNot { it == ContentControl.WifiStyleSwitch }.forEach { control ->
                         ContentControlRow(control, settings, update, ringSettings)
                     }
@@ -181,9 +184,11 @@ internal fun PartSettingsSheet(
                         }
                     }
 
-                    rows.forEach { spec ->
-                        if (spec.enabled(a)) {
-                            SliderRow(spec, settings, update)
+                    if (part != SettingsPart.Shade) {
+                        rows.forEach { spec ->
+                            if (spec.enabled(a)) {
+                                SliderRow(spec, settings, update)
+                            }
                         }
                     }
 

@@ -14,6 +14,7 @@ import android.view.MotionEvent
 import android.view.View
 import io.github.libxposed.api.XposedModule
 import io.github.odomu.honorduo.hook.tracker.HiddenViews
+import io.github.odomu.honorduo.hook.tracker.ShadePanelScale
 import io.github.odomu.honorduo.hook.tracker.SliderPress
 import io.github.odomu.honorduo.model.StatusAppearance
 
@@ -37,6 +38,42 @@ internal object ControlCenterHook {
         n += hookPowerButton(module, cl)
         n += hookVolumeSlider(module, cl)
         n += hookSwitcher(module, cl)
+        n += hookPanelScale(module, cl)
+        return n
+    }
+
+    /** Keep native page geometry and compose user scale with MagicOS animation values. */
+    private fun hookPanelScale(module: XposedModule, cl: ClassLoader): Int {
+        val column = Refl.cls("com.android.systemui.statusbar.phone.HnColumeContainer", cl) ?: return 0
+        var n = SystemUiHook.hook(module, Refl.methodNamed(column, "onFinishInflate", 0), "honorduo-shade-scale") { chain ->
+            val result = chain.proceed()
+            (chain.thisObject as? View)?.let(ShadePanelScale::register)
+            result
+        }
+        n += SystemUiHook.hook(module, Refl.methodNamed(column, "onMeasure", 2), "honorduo-shade-viewport") { chain ->
+            val view = chain.thisObject as? View
+            if (view == null || !column.isInstance(view)) chain.proceed() else {
+                val height = chain.getArg(1) as Int
+                val adjusted = ShadePanelScale.heightMeasureSpec(view, height)
+                if (height == adjusted) chain.proceed() else chain.proceed(arrayOf<Any>(chain.getArg(0), adjusted))
+            }
+        }
+        for (method in listOf("setScaleX", "setScaleY")) {
+            n += SystemUiHook.hook(module, Refl.method(View::class.java, method, Float::class.javaPrimitiveType!!), "honorduo-shade-" + method) { chain ->
+                val view = chain.thisObject as? View
+                if (view == null || !column.isInstance(view) || ShadePanelScale.internalWrite()) chain.proceed()
+                else chain.proceed(arrayOf<Any>(ShadePanelScale.nativeScale(view, chain.getArg(0) as Float)))
+            }
+        }
+        // ViewPropertyAnimator writes RenderNode directly, bypassing View setters.
+        val animatorView = Refl.field(android.view.ViewPropertyAnimator::class.java, "mView")
+        for (method in listOf("scaleX", "scaleY", "scaleXBy", "scaleYBy")) {
+            n += SystemUiHook.hook(module, Refl.method(android.view.ViewPropertyAnimator::class.java, method, Float::class.javaPrimitiveType!!), "honorduo-shade-anim-" + method) { chain ->
+                val view = Refl.get(animatorView, chain.thisObject) as? View
+                if (view == null || !column.isInstance(view)) chain.proceed()
+                else chain.proceed(arrayOf<Any>(ShadePanelScale.nativeScale(view, chain.getArg(0) as Float)))
+            }
+        }
         return n
     }
 
@@ -93,5 +130,6 @@ internal object ControlCenterHook {
 
     fun onConfigChanged(a: StatusAppearance) {
         HiddenViews.applyAll(a)
+        ShadePanelScale.applyAll(a.shadeIconScale)
     }
 }

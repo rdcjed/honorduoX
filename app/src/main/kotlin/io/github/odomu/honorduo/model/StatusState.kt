@@ -1041,7 +1041,13 @@ internal class StatusState(val host: View) {
             val tick = object : Runnable {
                 override fun run() {
                     try {
-                        if (ModuleConfig.appearance().screenshotSignal && BarVisibility.shown) {
+                        val appearance = ModuleConfig.appearance()
+                        // Hidden/disabled rows cannot use this fallback binder query.
+                        if (!ScreenStateTracker.isScreenOn || !BarVisibility.shown || !appearance.enabled) {
+                            main.postDelayed(this, DATA_ACTIVITY_POLL_MS)
+                            return
+                        }
+                        if (appearance.screenshotSignal) {
                             sampleSimsIfDue()
                         }
                         val method = tm.javaClass.getMethod("getDataActivity")

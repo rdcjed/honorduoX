@@ -890,10 +890,6 @@ internal object StatusBarRowManager {
             remove(row, row.verticalBattery)
             row.verticalBattery = null
             insertBefore(row, it)
-            (it.layoutParams as? LinearLayout.LayoutParams)?.let { params ->
-                params.marginStart = (4f * density).roundToInt()
-                it.layoutParams = params
-            }
             row.verticalBattery = it
             row.outOrderApplied = null
         }
@@ -950,7 +946,7 @@ internal object StatusBarRowManager {
     private fun size(view: View, width: Int, height: Int, gapEndDp: Int, gapStartDp: Int, density: Float) {
         val lp = view.layoutParams as? LinearLayout.LayoutParams ?: LinearLayout.LayoutParams(width, height)
         val endMargin = (gapEndDp * density).roundToInt()
-        val startMargin = (gapStartDp * density).roundToInt()
+        val startMargin = StatusIconSpacing.withRightSpacing(view, (gapStartDp * density).roundToInt())
         if (lp.width == width && lp.height == height &&
             lp.marginEnd == endMargin && lp.marginStart == startMargin &&
             lp.gravity == Gravity.CENTER_VERTICAL

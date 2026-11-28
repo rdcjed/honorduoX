@@ -1,7 +1,9 @@
 package io.github.odomu.honorduo.hook.statusbar
 
+import android.content.res.Resources
 import android.view.View
 import android.view.ViewGroup
+import io.github.odomu.honorduo.hook.core.Refl
 import java.util.WeakHashMap
 import kotlin.math.roundToInt
 
@@ -12,14 +14,36 @@ internal object StatusIconSpacing {
     private data class Translation(val original: Float, val applied: Float)
     private val leftTranslations = WeakHashMap<View, Translation>()
     private val groupNames = listOf("statusIcons", "network_area_icons", "signalIcons")
+    private data class ResourceIds(val groups: IntArray, val notifications: Int)
+    private val resourceIds = WeakHashMap<Resources, ResourceIds>()
+
+    private fun ids(resources: Resources): ResourceIds = resourceIds.getOrPut(resources) {
+        // Cache missing vendor IDs too: retrying their resource-table scans on
+        // every layout was a substantial part of the spacing CPU cost.
+        ResourceIds(
+            groupNames.map { Refl.resId(resources, it) }.toIntArray(),
+            Refl.resId(resources, "notification_icon_area"),
+        )
+    }
+
+    /** Keep a component's own layout writer and the spacing pass on the same final margin. */
+    fun withRightSpacing(view: View, baseStart: Int): Int {
+        val previous = rightMargins[view] ?: return baseStart
+        val target = baseStart + (previous.applied - previous.original)
+        if (previous.original != baseStart || previous.applied != target) {
+            rightMargins[view] = Margin(baseStart, target)
+        }
+        return target
+    }
 
     fun applyRight(root: ViewGroup, spacingDp: Int) {
         val resources = root.resources
         val extra = (spacingDp * resources.displayMetrics.density).roundToInt()
         if (extra == 0 && rightMargins.isEmpty()) return
-        val groups = groupNames.mapNotNull { name ->
-            val id = resources.getIdentifier(name, "id", "com.android.systemui")
-            if (id == 0) null else root.findViewById<ViewGroup>(id)
+        val groups = buildList {
+            for (id in ids(resources).groups) {
+                if (id != 0) root.findViewById<ViewGroup>(id)?.let(::add)
+            }
         }
         for (group in groups) {
             for (index in 0 until group.childCount) {
@@ -36,7 +60,7 @@ internal object StatusIconSpacing {
         if (spacingDp == 0 && leftTranslations.isEmpty()) return
         val contents = StatusBarIconManager.contentsOf(row) ?: return
         if (StatusBarIconManager.isKeyguardTree(contents)) return
-        val id = contents.resources.getIdentifier("notification_icon_area", "id", "com.android.systemui")
+        val id = ids(contents.resources).notifications
         if (id == 0) return
         val notifications = contents.findViewById<View>(id) ?: return
         val clock = contents.findViewById<View>(StatusBarIconManager.clockId)
@@ -60,7 +84,10 @@ internal object StatusIconSpacing {
         val previous = margins[view]
         val original = if (previous?.applied == current) previous.original else current
         val target = original + extra
-        if (extra == 0) margins.remove(view) else margins[view] = Margin(original, target)
+        if (extra == 0) margins.remove(view)
+        else if (previous?.original != original || previous.applied != target) {
+            margins[view] = Margin(original, target)
+        }
         if (target != current) {
             params.marginStart = target
             view.layoutParams = params

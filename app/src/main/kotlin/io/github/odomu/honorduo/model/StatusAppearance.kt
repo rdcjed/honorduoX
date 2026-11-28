@@ -266,6 +266,9 @@ class StatusAppearance(c: ModuleSettings) {
         return if (index in colors.indices) colors[index] else 0
     }
 
+    /** Independent panel sizes; disabling the module returns both to the host. */
+    val shadeIconScale: Float = if (enabled) c.shadeIconScale.coerceIn(Prefs.MIN_SHADE_ICON_SCALE, Prefs.MAX_SHADE_ICON_SCALE) / 100f else 1f
+
     /** Control center: the header's power button is hidden. */
     @JvmField val shadeHidePower: Boolean = enabled && c.shadeHidePower
 

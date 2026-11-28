@@ -109,6 +109,8 @@ internal object FpsTicker {
 
     private fun stopSampling() {
         callbackRunning = false
+        // A rapid off/on can otherwise start a second chain before the old frame fires.
+        Choreographer.getInstance().removeFrameCallback(frameCallback)
         val handler = main ?: return
         handler.removeCallbacks(pollRunnable)
         pollScheduled = false
@@ -129,7 +131,7 @@ internal object FpsTicker {
     private fun poll() {
         pollScheduled = false
         if (!isFpsActive()) {
-            callbackRunning = false
+            stopSampling()
             return
         }
         try {
@@ -145,7 +147,7 @@ internal object FpsTicker {
             if (isFpsActive()) {
                 schedulePoll(INTERVAL_MS)
             } else {
-                callbackRunning = false
+                stopSampling()
             }
         }
     }
